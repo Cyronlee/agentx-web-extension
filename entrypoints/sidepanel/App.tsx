@@ -1,9 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettings } from "@/hooks/use-settings";
-import { Heart, MessageSquare, Settings, User } from "lucide-react";
+import { Heart, MessageSquare, Settings, Bug } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { ChatView } from "./components/ChatView";
-import { ProfileView } from "./components/ProfileView";
+import { DebugView } from "./components/DebugView";
 import { SettingsView } from "./components/SettingsView";
 
 function App() {
@@ -61,8 +61,8 @@ function App() {
               value="profile"
               className="data-[state=active]:after:bg-primary relative rounded-none py-2 px-4 flex items-center gap-2 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none flex-1"
             >
-              <User className="h-4 w-4" />
-              Profile
+              <Bug className="h-4 w-4" />
+              Debug
             </TabsTrigger>
             <TabsTrigger
               value="settings"
@@ -78,7 +78,7 @@ function App() {
           </TabsContent>
 
           <TabsContent value="profile" className="flex-1 overflow-hidden">
-            <ProfileView />
+            <DebugView />
           </TabsContent>
 
           <TabsContent value="settings" className="flex-1 overflow-hidden">

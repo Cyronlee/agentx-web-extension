@@ -1,6 +1,6 @@
-import { defineConfig } from 'wxt';
-import tailwindcss from '@tailwindcss/vite';
-import path from 'path';
+import { defineConfig } from 'wxt'
+import tailwindcss from '@tailwindcss/vite'
+import path from 'path'
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
@@ -12,12 +12,24 @@ export default defineConfig({
     plugins: [tailwindcss()],
   }),
   manifest: {
-    permissions: ['sidePanel', 'storage'],
+    permissions: [
+      'sidePanel',
+      'storage',
+      'contextMenus',
+      'activeTab',
+      'scripting',
+      'tabs',
+      'clipboardRead',
+      'clipboardWrite',
+      'downloads',
+      'notifications',
+    ],
+    host_permissions: ['https://httpbin.org/*', '<all_urls>'],
     side_panel: {
-      default_path: 'sidepanel.html'
+      default_path: 'sidepanel.html',
     },
     action: {
-      default_title: 'Open Sidepanel'
-    }
+      default_title: 'Open Sidepanel',
+    },
   },
-});
+})
