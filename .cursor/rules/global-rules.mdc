@@ -1,0 +1,19 @@
+---
+alwaysApply: true
+---
+
+## Tech Stack
+
+- pnpm
+- React
+- TypeScript
+- WXT: Next-gen Web Extension Framework
+
+## Memory
+
+- Save all memories to .memory/
+- Every file must have YAML frontmatter: title, tags, date
+- Keep the file content concise, only core conclusions, reusable snippets, key decisions
+- All references use [[wiki-link]] to existing files
+- Same topic must be merged or cross-linked, never duplicate
+- After save, automatically maintain .memory/index.md
