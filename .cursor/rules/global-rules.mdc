@@ -2,18 +2,93 @@
 alwaysApply: true
 ---
 
-## Tech Stack
+## Stack
 
 - pnpm
+- WXT
 - React
 - TypeScript
-- WXT: Next-gen Web Extension Framework
+- Tailwind CSS
+- shadcn/ui
+- lucide-react
 
-## Memory
+## Structure
 
-- Save all memories to .memory/
-- Every file must have YAML frontmatter: title, tags, date
-- Keep the file content concise, only core conclusions, reusable snippets, key decisions
-- All references use [[wiki-link]] to existing files
-- Same topic must be merged or cross-linked, never duplicate
-- After save, automatically maintain .memory/index.md
+```
+entrypoints/          # auto-discovered by WXT
+  background.ts       # service worker
+  content.ts          # page injection
+  sidepanel/          # React UI
+components/ui/        # shadcn/ui (auto-gen)
+hooks/                # use-settings.ts, use-theme.ts
+lib/utils.ts          # cn()
+assets/tailwind.css   # theme vars
+app.config.ts         # runtime config + type augmentation
+wxt.config.ts         # manifest generation
+.memory/              # AI context (wiki-link format)
+```
+
+## Hard Rules
+
+### WXT
+
+- Use `defineBackground()`, `defineContentScript()` wrappers
+- Import from `#imports`: `storage`, `browser`, `useAppConfig()`
+- NEVER manually edit manifest.json (auto-generated from wxt.config.ts)
+
+### Imports
+
+- `@/` → project root (ALWAYS)
+- `#imports` → WXT auto-imports
+
+### Storage
+
+```typescript
+storage.defineItem<T>("local:key", { fallback: T });
+// MUST: type + fallback
+// Access: .getValue(), .setValue(), .removeValue()
+```
+
+### Styling
+
+- Tailwind utilities ONLY: `text-muted-foreground`, `bg-primary`
+- Theme: `.dark` class-based
+- Full-height: `flex flex-col h-screen`
+- Scrollable: `<ScrollArea>` wrapper
+
+### Components
+
+- Add shadcn: `pnpm dlx shadcn@latest add <component>`
+- Settings pattern: Label + description + control
+- NEVER inline styles
+
+### Types
+
+- Strict mode ENFORCED
+- Augment WXT types in `app.config.ts`
+- Explicit storage types REQUIRED
+
+### Workflow
+
+- `pnpm dev` (Chrome) / `pnpm dev:firefox|edge`
+- `pnpm compile` before commit
+- `pnpm build` → `.output/`
+- `pnpm zip` for distribution
+
+### Extension
+
+- Background ↔ Sidepanel: `browser.runtime.sendMessage()`
+- Content script: DOM access, isolated context
+- NEVER block main thread
+
+### Memory
+
+- `.memory/` with YAML frontmatter: `title`, `tags`, `date`
+- `[[wiki-link]]` references
+- Update `.memory/index.md`
+
+### Env
+
+- Prefix: `WXT_*`
+- Access: `import.meta.env.WXT_*`
+- Type in `app.config.ts` module augmentation
