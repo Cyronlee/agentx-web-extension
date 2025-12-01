@@ -1,9 +1,43 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* base styles */
 
 @custom-variant dark (&:is(.dark *));
 
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply text-foreground bg-background;
+  }
+}
+
+/* streamdown overrides */
+
 @source "../node_modules/streamdown/dist/index.js";
+@layer components {
+  [data-streamdown='code-block'] {
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  [data-streamdown='code-block'] code {
+    white-space: pre-wrap !important;
+    word-break: break-all;
+  }
+
+  @screen sm {
+    [data-streamdown='code-block'] {
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+  }
+}
+
+/* shadcn/ui theme */
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -110,22 +144,4 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply text-foreground bg-background;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
 }
