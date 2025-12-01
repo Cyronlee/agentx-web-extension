@@ -68,27 +68,25 @@ storage.defineItem<T>("local:key", { fallback: T });
 - Augment WXT types in `app.config.ts`
 - Explicit storage types REQUIRED
 
-### Workflow
-
-- `pnpm dev` (Chrome) / `pnpm dev:firefox|edge`
-- `pnpm compile` before commit
-- `pnpm build` → `.output/`
-- `pnpm zip` for distribution
-
 ### Extension
 
 - Background ↔ Sidepanel: `browser.runtime.sendMessage()`
 - Content script: DOM access, isolated context
 - NEVER block main thread
 
-### Memory
-
-- `.memory/` with YAML frontmatter: `title`, `tags`, `date`
-- `[[wiki-link]]` references
-- Update `.memory/index.md`
-
 ### Env
 
 - Prefix: `WXT_*`
 - Access: `import.meta.env.WXT_*`
 - Type in `app.config.ts` module augmentation
+
+### Quality Gate
+
+- Ensure `pnpm run build` passes after code changes
+
+### Memory
+
+- Update memories after code changes
+- `.memory/` with YAML frontmatter: `title`, `tags`, `date`
+- `[[wiki-link]]` references
+- Maintain `.memory/index.md` as the index of all memories
