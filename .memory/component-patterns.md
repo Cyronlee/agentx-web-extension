@@ -78,6 +78,44 @@ const { resolvedTheme, setTheme } = useTheme({
 })
 ```
 
+## Combobox Pattern (ConversationSelector)
+
+Using shadcn/ui Command + Popover for searchable selection:
+
+```tsx
+import { Command, CommandInput, CommandItem, ... } from '@/components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+
+<Popover open={open} onOpenChange={setOpen}>
+  <PopoverTrigger asChild>
+    <Button variant="ghost" role="combobox" aria-expanded={open}>
+      {currentValue || 'Select...'}
+      <ChevronsUpDown className="opacity-50" />
+    </Button>
+  </PopoverTrigger>
+  <PopoverContent className="w-[260px] p-0">
+    <Command>
+      <CommandInput placeholder="Search..." />
+      <CommandList>
+        <CommandEmpty>No results.</CommandEmpty>
+        <CommandGroup>
+          {items.map(item => (
+            <CommandItem
+              key={item.id}
+              value={item.label}
+              onSelect={() => { onChange(item.id); setOpen(false) }}
+            >
+              {item.label}
+              <Check className={cn('ml-auto', selected ? 'opacity-100' : 'opacity-0')} />
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </CommandList>
+    </Command>
+  </PopoverContent>
+</Popover>
+```
+
 ## Reference
-See [[storage-pattern]], [[theme-system]]
+See [[storage-pattern]], [[theme-system]], [[ai-sdk-integration]]
 

@@ -1168,7 +1168,7 @@ const openai = new OpenAI({
 const completion = await openai.chat.completions.create({
   model: 'openai/gpt-4o', // Primary model
   // @ts-ignore - models is a gateway extension
-  models: ['openai/gpt-5-nano', 'gemini-2.0-flash'], // Fallback models
+  models: ['openai/gpt-5-nano', 'gemini-2.5-flash'], // Fallback models
   messages: [
     {
       role: 'user',
@@ -1215,7 +1215,7 @@ const completion = await openai.chat.completions.create({
   // Model fallbacks via provider options
   providerOptions: {
     gateway: {
-      models: ['openai/gpt-5-nano', 'gemini-2.0-flash'], // Fallback models
+      models: ['openai/gpt-5-nano', 'gemini-2.5-flash'], // Fallback models
     },
   },
 });
@@ -1230,7 +1230,7 @@ Both configurations will:
 
 1.  Try the primary model (`openai/gpt-4o`) first
 2.  If it fails, try `openai/gpt-5-nano`
-3.  If that also fails, try `gemini-2.0-flash`
+3.  If that also fails, try `gemini-2.5-flash`
 4.  Return the result from the first model that succeeds
 
 #### [Streaming with provider options](#streaming-with-provider-options)

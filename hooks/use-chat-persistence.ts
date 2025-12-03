@@ -16,12 +16,15 @@ import {
   type Conversation,
 } from '@/lib/db'
 
-import { getApiKey } from './use-api-key'
+import { getApiKeys } from './use-api-key'
+import { getMCPConfig } from './use-mcp-config'
 
-const API_URL = 'https://express-ai-sdk-demo.vercel.app'
+// Backend API URL
+const API_URL = 'http://localhost:3001/api/chat'
 
 interface UseChatPersistenceOptions {
   conversationId?: string
+  onConversationUpdate?: () => void
 }
 
 export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
@@ -70,13 +73,18 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
     initConversation()
   }, [options.conversationId])
 
-  // Create transport with dynamic API key
+  // Create transport with dynamic API keys and MCP config
   const transport = new DefaultChatTransport({
     api: API_URL,
-    headers: async () => {
-      const apiKey = await getApiKey()
+    body: async () => {
+      const [apiKeys, mcpConfig] = await Promise.all([
+        getApiKeys(),
+        getMCPConfig(),
+      ])
+
       return {
-        Authorization: `Bearer ${apiKey}`,
+        apiKeys,
+        mcpConfig,
       }
     },
   })
@@ -114,6 +122,8 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
               const title = textPart.text.slice(0, 50) + (textPart.text.length > 50 ? '...' : '')
               await updateConversation(conversation.id, { title })
               setConversation((prev) => (prev ? { ...prev, title } : prev))
+              // Notify parent to refresh conversations list
+              options.onConversationUpdate?.()
             }
           }
         }
@@ -150,27 +160,29 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
 
   // Custom sendMessage that saves user message first
   const sendMessage = useCallback(
-    async (messageOptions: Parameters<typeof chatResult.sendMessage>[0]) => {
+    async (messageOptions?: Parameters<typeof chatResult.sendMessage>[0]) => {
       if (!conversation) {
         console.error('No conversation available')
         return
       }
 
-      // Create and save user message
-      const userMessageId = nanoid()
-      const userMessage: UIMessage = {
-        id: userMessageId,
-        role: 'user',
-        parts: [{ type: 'text', text: messageOptions.text || '' }],
+      // If messageOptions has text, create and save user message
+      if (messageOptions?.text) {
+        const userMessageId = nanoid()
+        const userMessage: UIMessage = {
+          id: userMessageId,
+          role: 'user',
+          parts: [{ type: 'text', text: messageOptions.text }],
+        }
+
+        // Save to IndexedDB
+        await addMessage(uiMessageToStoredMessage(userMessage, conversation.id))
+        processedMessageIds.current.add(userMessageId)
+        lastMessageCountRef.current++
+
+        // Update conversation timestamp
+        await updateConversation(conversation.id, { updatedAt: Date.now() })
       }
-
-      // Save to IndexedDB
-      await addMessage(uiMessageToStoredMessage(userMessage, conversation.id))
-      processedMessageIds.current.add(userMessageId)
-      lastMessageCountRef.current++
-
-      // Update conversation timestamp
-      await updateConversation(conversation.id, { updatedAt: Date.now() })
 
       // Send to AI
       chatResult.sendMessage(messageOptions)
@@ -202,4 +214,3 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
     newConversation,
   }
 }
-

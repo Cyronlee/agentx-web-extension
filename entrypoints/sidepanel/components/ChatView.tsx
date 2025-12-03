@@ -40,6 +40,7 @@ import {
   SourcesContent,
   SourcesTrigger,
 } from '@/components/ai-elements/sources'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +50,7 @@ import {
 import { Spinner } from '@/components/ui/spinner'
 import { useChatPersistence } from '@/hooks/use-chat-persistence'
 import { cn } from '@/lib/utils'
+import { isToolUIPart, getToolName } from 'ai'
 import {
   ArrowUpIcon,
   CameraIcon,
@@ -61,28 +63,59 @@ import {
   ScreenShareIcon,
   SearchIcon,
   SquareIcon,
+  Wrench,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+// Human-in-the-loop approval states (must match backend)
+const APPROVAL = {
+  YES: 'Yes, confirmed.',
+  NO: 'No, denied.',
+} as const
+
 const models = [
   {
-    id: 'grok-3',
-    name: 'Grok-3',
-    chef: 'xAI',
-    chefSlug: 'xai',
-    providers: ['xai'],
+    id: 'openai/gpt-4o',
+    name: 'GPT-4o',
+    chef: 'OpenAI',
+    chefSlug: 'openai',
+    providers: ['openai'],
   },
   {
-    id: 'grok-2-1212',
-    name: 'Grok-2-1212',
-    chef: 'xAI',
-    chefSlug: 'xai',
-    providers: ['xai'],
+    id: 'openai/gpt-4o-mini',
+    name: 'GPT-4o Mini',
+    chef: 'OpenAI',
+    chefSlug: 'openai',
+    providers: ['openai'],
+  },
+  {
+    id: 'anthropic/claude-sonnet-4-20250514',
+    name: 'Claude Sonnet 4',
+    chef: 'Anthropic',
+    chefSlug: 'anthropic',
+    providers: ['anthropic'],
+  },
+  {
+    id: 'google/gemini-2.5-flash',
+    name: 'Gemini 2.0 Flash',
+    chef: 'Google',
+    chefSlug: 'google',
+    providers: ['google'],
   },
 ]
 
-export function ChatView() {
+interface ChatViewProps {
+  conversationId: string
+  onConversationUpdate?: () => void
+}
+
+export function ChatView({
+  conversationId,
+  onConversationUpdate,
+}: ChatViewProps) {
   const [model, setModel] = useState<string>(models[0].id)
   const [modelSelectorOpen, setModelSelectorOpen] = useState(false)
   const [text, setText] = useState<string>('')
@@ -91,14 +124,22 @@ export function ChatView() {
   const {
     messages,
     sendMessage,
+    addToolOutput,
     status,
     stop,
     isLoading: isInitializing,
     error,
     conversation,
-  } = useChatPersistence()
+  } = useChatPersistence({ conversationId, onConversationUpdate })
 
   const selectedModelData = models.find((m) => m.id === model)
+
+  // Check if there's a pending tool confirmation
+  const hasPendingToolConfirmation = messages.some((m) =>
+    m.parts?.some(
+      (part) => isToolUIPart(part) && part.state === 'input-available'
+    )
+  )
 
   const handleSubmit = (message: PromptInputMessage) => {
     const hasText = Boolean(message.text)
@@ -110,6 +151,19 @@ export function ChatView() {
 
     sendMessage({ text: message.text || '' })
     setText('')
+  }
+
+  const handleToolConfirmation = async (
+    toolCallId: string,
+    toolName: string,
+    approved: boolean
+  ) => {
+    await addToolOutput({
+      toolCallId,
+      tool: toolName,
+      output: approved ? APPROVAL.YES : APPROVAL.NO,
+    })
+    sendMessage() // Continue the conversation after tool confirmation
   }
 
   const handleFileAction = (action: string) => {
@@ -159,12 +213,12 @@ export function ChatView() {
                     <SourcesContent>
                       {message.parts
                         .filter((p) => p.type === 'source-url')
-                        .map((part) => {
+                        .map((part, index) => {
                           if (part.type === 'source-url') {
                             return (
                               <Source
                                 href={part.url}
-                                key={part.id}
+                                key={`${part.url}-${index}`}
                                 title={part.title || new URL(part.url).hostname}
                               />
                             )
@@ -192,6 +246,125 @@ export function ChatView() {
                     </ReasoningContent>
                   </Reasoning>
                 )}
+
+                {/* Render tool invocations with confirmation UI */}
+                {message.parts
+                  .filter((p) => isToolUIPart(p))
+                  .map((part) => {
+                    if (!isToolUIPart(part)) return null
+                    const toolName = getToolName(part)
+                    const toolCallId = part.toolCallId
+
+                    // Tool waiting for confirmation
+                    if (part.state === 'input-available') {
+                      return (
+                        <div
+                          key={toolCallId}
+                          className="my-2 rounded-lg border bg-background p-3"
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <Wrench className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium">
+                              Tool Request
+                            </span>
+                          </div>
+                          <div className="text-sm mb-2">
+                            <span className="text-muted-foreground">
+                              Execute{' '}
+                            </span>
+                            <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">
+                              {toolName}
+                            </code>
+                          </div>
+                          <div className="text-xs text-muted-foreground bg-muted rounded p-2 mb-3 font-mono overflow-auto max-h-32">
+                            {JSON.stringify(part.input, null, 2)}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() =>
+                                handleToolConfirmation(
+                                  toolCallId,
+                                  toolName,
+                                  true
+                                )
+                              }
+                              className="flex-1"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                handleToolConfirmation(
+                                  toolCallId,
+                                  toolName,
+                                  false
+                                )
+                              }
+                              className="flex-1"
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Deny
+                            </Button>
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    // Tool completed (has output)
+                    if (part.state === 'output-available') {
+                      const isError =
+                        typeof part.output === 'string' &&
+                        part.output.startsWith('Error')
+                      return (
+                        <div
+                          key={toolCallId}
+                          className={cn(
+                            'my-2 rounded-lg border p-3',
+                            isError
+                              ? 'border-destructive/50 bg-destructive/10'
+                              : 'border-green-500/50 bg-green-500/10'
+                          )}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            {isError ? (
+                              <XCircle className="h-4 w-4 text-destructive" />
+                            ) : (
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            )}
+                            <code className="text-xs font-mono">
+                              {toolName}
+                            </code>
+                          </div>
+                          <div className="text-xs text-muted-foreground font-mono overflow-auto max-h-24">
+                            {typeof part.output === 'string'
+                              ? part.output
+                              : JSON.stringify(part.output, null, 2)}
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    // Tool in progress
+                    return (
+                      <div
+                        key={toolCallId}
+                        className="my-2 rounded-lg border bg-background p-3"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Spinner className="h-4 w-4" />
+                          <code className="text-xs font-mono">{toolName}</code>
+                          <span className="text-xs text-muted-foreground">
+                            Running...
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
 
                 {/* Render text content */}
                 <MessageContent
@@ -237,8 +410,13 @@ export function ChatView() {
           <PromptInputTextarea
             className="px-5 md:text-base"
             onChange={(event) => setText(event.target.value)}
-            placeholder="How can I help you?"
+            placeholder={
+              hasPendingToolConfirmation
+                ? 'Please approve or deny the tool request above...'
+                : 'How can I help you?'
+            }
             value={text}
+            disabled={hasPendingToolConfirmation}
           />
           <PromptInputFooter className="p-2.5">
             <PromptInputTools>
@@ -328,7 +506,7 @@ export function ChatView() {
                   <ModelSelectorInput placeholder="Search models..." />
                   <ModelSelectorList>
                     <ModelSelectorEmpty>No models found.</ModelSelectorEmpty>
-                    <ModelSelectorGroup heading="xAI">
+                    <ModelSelectorGroup heading="Models">
                       {models.map((m) => (
                         <ModelSelectorItem
                           key={m.id}
@@ -374,7 +552,7 @@ export function ChatView() {
                   className="rounded-full bg-foreground font-medium text-background"
                   type="submit"
                   variant="default"
-                  disabled={!text.trim()}
+                  disabled={!text.trim() || hasPendingToolConfirmation}
                 >
                   <ArrowUpIcon size={16} />
                   <span className="sr-only">Send</span>

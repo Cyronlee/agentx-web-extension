@@ -6,12 +6,26 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { ConversationSelector } from './ConversationSelector'
+import type { Conversation } from '@/lib/db'
 
 interface HeaderProps {
   onNavigate: (page: 'chat' | 'settings' | 'debug') => void
+  conversations: Conversation[]
+  currentConversationId: string | null
+  onSelectConversation: (id: string) => void
+  onNewChat: () => void
+  conversationsLoading?: boolean
 }
 
-export function Header({ onNavigate }: HeaderProps) {
+export function Header({
+  onNavigate,
+  conversations,
+  currentConversationId,
+  onSelectConversation,
+  onNewChat,
+  conversationsLoading,
+}: HeaderProps) {
   return (
     <div className="border-b px-4 py-3">
       <div className="flex items-center justify-between">
@@ -25,20 +39,19 @@ export function Header({ onNavigate }: HeaderProps) {
           </div>
         </div>
 
-        {/* Middle: Title */}
-        <div className="flex-1 text-center">
-          <h2 className="text-sm font-medium text-muted-foreground">AI Chat</h2>
+        {/* Middle: Conversation Selector */}
+        <div className="flex-1 flex justify-center">
+          <ConversationSelector
+            conversations={conversations}
+            currentConversationId={currentConversationId}
+            onSelect={onSelectConversation}
+            loading={conversationsLoading}
+          />
         </div>
 
         {/* Right: New Chat + Menu */}
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              // TODO: Implement new chat functionality
-            }}
-          >
+          <Button variant="ghost" size="icon" onClick={onNewChat}>
             <Plus className="h-5 w-5" />
           </Button>
 
