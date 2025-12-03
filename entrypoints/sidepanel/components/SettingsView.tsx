@@ -6,17 +6,30 @@ import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
+import { useApiKey } from '@/hooks/use-api-key'
 import { useSettings } from '@/hooks/use-settings'
 import { useTheme } from '@/hooks/use-theme'
-import { Monitor, Moon, Sun } from 'lucide-react'
+import { Eye, EyeOff, Key, Monitor, Moon, Sun } from 'lucide-react'
+import { useState } from 'react'
 
 export function SettingsView() {
   const config = useAppConfig()
   const { appearance, system, updateAppearance, updateSystem, resetSettings } =
     useSettings()
+  const { apiKey, setApiKey, loading: apiKeyLoading } = useApiKey()
   const { setTheme } = useTheme({
     theme: appearance.theme,
     onThemeChange: (theme) => updateAppearance({ theme }),
+  })
+
+  const [showApiKey, setShowApiKey] = useState(false)
+  const [apiKeyInput, setApiKeyInput] = useState('')
+
+  // Sync apiKeyInput with loaded apiKey
+  useState(() => {
+    if (!apiKeyLoading && apiKey) {
+      setApiKeyInput(apiKey)
+    }
   })
 
   const themeOptions = [
@@ -32,9 +45,59 @@ export function SettingsView() {
     }
   }
 
+  const handleApiKeyChange = (value: string) => {
+    setApiKeyInput(value)
+    setApiKey(value)
+  }
+
   return (
     <ScrollArea className="h-full">
       <div className="space-y-6 p-4">
+        {/* AI Configuration */}
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold">AI Configuration</h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              Configure your AI provider settings
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Key className="h-4 w-4" />
+              API Key
+            </Label>
+            <div className="relative">
+              <Input
+                type={showApiKey ? 'text' : 'password'}
+                value={apiKeyInput}
+                onChange={(e) => handleApiKeyChange(e.target.value)}
+                placeholder="Enter your API key"
+                className="pr-10"
+                disabled={apiKeyLoading}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                onClick={() => setShowApiKey(!showApiKey)}
+              >
+                {showApiKey ? (
+                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Your API key is stored locally and never sent to third parties
+            </p>
+          </div>
+        </div>
+
+        <Separator />
+
         {/* Appearance Settings */}
         <div className="space-y-4">
           <div>
@@ -173,4 +236,3 @@ export function SettingsView() {
     </ScrollArea>
   )
 }
-
