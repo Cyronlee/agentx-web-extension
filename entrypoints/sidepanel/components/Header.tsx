@@ -10,7 +10,7 @@ import { ConversationSelector } from './ConversationSelector'
 import type { Conversation } from '@/lib/db'
 
 interface HeaderProps {
-  onNavigate: (page: 'chat' | 'settings' | 'debug') => void
+  onNavigate: (page: 'chat' | 'settings' | 'debug' | 'demo') => void
   conversations: Conversation[]
   currentConversationId: string | null
   onSelectConversation: (id: string) => void
@@ -69,6 +69,10 @@ export function Header({
               <DropdownMenuItem onClick={() => onNavigate('debug')}>
                 <Bug className="mr-2 h-4 w-4" />
                 Debug
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onNavigate('demo')}>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Demo
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

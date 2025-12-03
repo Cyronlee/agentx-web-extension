@@ -5,8 +5,9 @@ import { Header } from './components/Header'
 import { ChatPage } from './pages/ChatPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { DebugPage } from './pages/DebugPage'
+import { ChatView } from './components/ChatDemo'
 
-type Page = 'chat' | 'settings' | 'debug'
+type Page = 'chat' | 'settings' | 'debug' | 'demo'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('chat')
@@ -63,6 +64,7 @@ function App() {
           <SettingsPage onBack={handleBackToChat} />
         )}
         {currentPage === 'debug' && <DebugPage onBack={handleBackToChat} />}
+        {currentPage === 'demo' && <ChatView />}
       </div>
     </div>
   )

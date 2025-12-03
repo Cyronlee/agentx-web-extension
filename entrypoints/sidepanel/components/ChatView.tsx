@@ -38,10 +38,12 @@ import { cn } from '@/lib/utils'
 import { isToolUIPart } from 'ai'
 import {
   ArrowUpIcon,
+  CameraIcon,
   CheckIcon,
   FileIcon,
   ImageIcon,
   PaperclipIcon,
+  ScreenShareIcon,
   SquareIcon,
   XIcon,
 } from 'lucide-react'
@@ -176,32 +178,6 @@ export function ChatView({
           className="divide-y-0 rounded-[28px]"
           onSubmit={handleSubmit}
         >
-          {/* File preview section */}
-          {hasFiles && (
-            <div className="flex flex-wrap gap-2 px-4 pt-3">
-              {Array.from(files!).map((file, index) => (
-                <div
-                  key={`${file.name}-${index}`}
-                  className="flex items-center gap-2 rounded-lg bg-muted px-3 py-1.5 text-sm"
-                >
-                  {file.type.startsWith('image/') ? (
-                    <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <FileIcon className="h-4 w-4 text-muted-foreground" />
-                  )}
-                  <span className="max-w-[150px] truncate">{file.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeFile(index)}
-                    className="ml-1 rounded-full p-0.5 hover:bg-background"
-                  >
-                    <XIcon className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
           <PromptInputTextarea
             className="px-5 md:text-base"
             onChange={(event) => setText(event.target.value)}
@@ -227,14 +203,15 @@ export function ChatView({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <PromptInputButton
-                    className={cn(
-                      '!rounded-full border text-foreground',
-                      hasFiles && 'bg-primary text-primary-foreground'
-                    )}
+                    className="!rounded-full border text-foreground"
                     variant="outline"
                   >
                     <PaperclipIcon size={16} />
-                    {hasFiles && <span className="text-xs">{fileCount}</span>}
+                    {hasFiles && (
+                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                        {fileCount}
+                      </span>
+                    )}
                     <span className="sr-only">Attach</span>
                   </PromptInputButton>
                 </DropdownMenuTrigger>
@@ -245,7 +222,7 @@ export function ChatView({
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => openFileDialog('image/*')}>
                     <ImageIcon className="mr-2" size={16} />
-                    Upload image
+                    Upload photo
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => openFileDialog('application/pdf')}
@@ -254,13 +231,20 @@ export function ChatView({
                     Upload PDF
                   </DropdownMenuItem>
                   {hasFiles && (
-                    <DropdownMenuItem
-                      onClick={clearFiles}
-                      className="text-destructive"
-                    >
-                      <XIcon className="mr-2" size={16} />
-                      Clear attachments
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem disabled className="text-xs opacity-70">
+                        {Array.from(files!)
+                          .map((f) => f.name)
+                          .join(', ')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={clearFiles}
+                        className="text-destructive"
+                      >
+                        <XIcon className="mr-2" size={16} />
+                        Clear attachments
+                      </DropdownMenuItem>
+                    </>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>

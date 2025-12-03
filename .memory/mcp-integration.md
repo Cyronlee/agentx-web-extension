@@ -88,19 +88,30 @@ Located in `SettingsView.tsx`:
 4. **Backend executes**: Only if approved
 5. **Result returned**: Tool output or denial message
 
-### Frontend Tool UI States
+### Frontend Tool UI
+
+Uses standard `@/components/ai-elements/tool` components:
 
 ```typescript
-// Waiting for approval
-if (part.state === 'input-available') {
-  // Show approval buttons
-}
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from '@/components/ai-elements/tool'
 
-// Executed (success or error)
-if (part.state === 'output-available') {
-  // Show result
-}
+<Tool defaultOpen={shouldOpenByDefault}>
+  <ToolHeader type={part.type} state={part.state} />
+  <ToolContent>
+    <ToolInput input={part.input} />
+    {/* Approval buttons shown when state === 'input-available' */}
+    <ToolOutput output={part.output} errorText={part.errorText} />
+  </ToolContent>
+</Tool>
 ```
+
+See [[chat-view-components]] for full implementation.
 
 ### Approval Constants (shared)
 

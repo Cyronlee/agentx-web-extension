@@ -15,9 +15,9 @@ The chat interface is built with modular components extracted from `ChatView.tsx
 ```
 entrypoints/sidepanel/
 ├── components/
-│   ├── ChatView.tsx         # Main chat container (~280 lines)
+│   ├── ChatView.tsx         # Main chat container
 │   ├── MessageParts.tsx     # Message part rendering
-│   └── ToolConfirmation.tsx # Tool approval UI
+│   └── ToolConfirmation.tsx # APPROVAL constants only
 └── lib/
     └── models.ts            # Model configuration
 ```
@@ -42,6 +42,15 @@ const {
 } = useFileUpload()
 ```
 
+## File Upload UI
+
+File attachments use a compact dropdown menu with:
+
+- Upload file / photo / PDF options
+- Badge counter on attachment button when files selected
+- File names shown in dropdown when attached
+- Clear attachments option
+
 ## Message Parts
 
 Based on stream message types from [[ai-sdk-integration]]:
@@ -50,21 +59,56 @@ Based on stream message types from [[ai-sdk-integration]]:
 |-----------|-----------|-------------|
 | `source-url` | `SourcesPart` | Web search results |
 | `reasoning` | `ReasoningPart` | Chain of thought |
-| `tool-ui` | `ToolPart` | Tool invocation status |
+| `tool-ui` | `ToolPart` | Tool invocation with standard Tool component |
 | `file` | `FilePartDisplay` | Image/file attachments |
 | `text` | `TextPart` | Message text content |
 
-## Tool States
+## Tool UI
 
-Tool invocations follow human-in-the-loop pattern:
+Tool invocations use the standard `@/components/ai-elements/tool` components:
 
-- `input-available` → Show confirmation UI
-- `output-available` → Show result (success/error)
-- Other states → Show loading spinner
+```typescript
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from '@/components/ai-elements/tool'
+
+<Tool defaultOpen={shouldOpenByDefault}>
+  <ToolHeader type={part.type} state={part.state} />
+  <ToolContent>
+    <ToolInput input={part.input} />
+    {/* HITL confirmation buttons for input-available state */}
+    <ToolOutput output={part.output} errorText={part.errorText} />
+  </ToolContent>
+</Tool>
+```
+
+### Tool States
+
+| State | UI Behavior |
+|-------|-------------|
+| `input-streaming` | Pending badge, collapsed |
+| `input-available` | Running badge, open with approve/deny buttons |
+| `output-available` | Completed badge, open with output |
+| `output-error` | Error badge, open with error message |
+
+### HITL (Human-in-the-Loop)
+
+Confirmation buttons appear inside `ToolContent` when `state === 'input-available'`:
+
+```typescript
+// ToolConfirmation.tsx exports only constants
+export const APPROVAL = {
+  YES: 'Yes, confirmed.',
+  NO: 'No, denied.',
+} as const
+```
 
 ## Related
 
 - [[ai-sdk-integration]]
 - [[component-patterns]]
 - [[mcp-integration]]
-

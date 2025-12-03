@@ -1,4 +1,8 @@
 import {
+  MessageContent,
+  MessageResponse,
+} from '@/components/ai-elements/message'
+import {
   Reasoning,
   ReasoningContent,
   ReasoningTrigger,
@@ -9,15 +13,17 @@ import {
   SourcesContent,
   SourcesTrigger,
 } from '@/components/ai-elements/sources'
-import { MessageContent, MessageResponse } from '@/components/ai-elements/message'
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from '@/components/ai-elements/tool'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { isToolUIPart, getToolName, type UIMessage } from 'ai'
-import { FileIcon } from 'lucide-react'
-import {
-  ToolConfirmation,
-  ToolResult,
-  ToolRunning,
-} from './ToolConfirmation'
+import { CheckCircle, FileIcon, XCircle } from 'lucide-react'
 
 type MessagePart = UIMessage['parts'][number]
 
@@ -73,33 +79,50 @@ export function ToolPart({ part, onConfirm }: ToolPartProps) {
   const toolName = getToolName(part)
   const toolCallId = part.toolCallId
 
-  // Tool waiting for confirmation
-  if (part.state === 'input-available') {
-    return (
-      <ToolConfirmation
-        toolCallId={toolCallId}
-        toolName={toolName}
-        input={part.input}
-        onConfirm={(approved) => onConfirm(toolCallId, toolName, approved)}
-      />
-    )
-  }
+  // Determine if tool should be open by default
+  const shouldOpenByDefault =
+    part.state === 'input-available' ||
+    part.state === 'output-available' ||
+    part.state === 'output-error'
 
-  // Tool completed (has output)
-  if (part.state === 'output-available') {
-    const isError =
-      typeof part.output === 'string' && part.output.startsWith('Error')
-    return (
-      <ToolResult
-        toolName={toolName}
-        output={part.output}
-        isError={isError}
-      />
-    )
-  }
+  return (
+    <Tool defaultOpen={shouldOpenByDefault}>
+      <ToolHeader type={part.type} state={part.state} />
+      <ToolContent>
+        <ToolInput input={part.input} />
 
-  // Tool in progress
-  return <ToolRunning toolName={toolName} />
+        {/* Confirmation buttons for HITL */}
+        {part.state === 'input-available' && (
+          <div className="flex gap-2 border-t p-4">
+            <Button
+              size="sm"
+              variant="default"
+              onClick={() => onConfirm(toolCallId, toolName, true)}
+              className="flex-1"
+            >
+              <CheckCircle className="mr-1 h-4 w-4" />
+              Approve
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onConfirm(toolCallId, toolName, false)}
+              className="flex-1"
+            >
+              <XCircle className="mr-1 h-4 w-4" />
+              Deny
+            </Button>
+          </div>
+        )}
+
+        {/* Output section */}
+        {(part.state === 'output-available' ||
+          part.state === 'output-error') && (
+          <ToolOutput output={part.output} errorText={part.errorText} />
+        )}
+      </ToolContent>
+    </Tool>
+  )
 }
 
 interface FilePartDisplayProps {
@@ -172,7 +195,11 @@ interface MessagePartsRendererProps {
   message: UIMessage
   isLastMessage: boolean
   isStreaming: boolean
-  onToolConfirm: (toolCallId: string, toolName: string, approved: boolean) => void
+  onToolConfirm: (
+    toolCallId: string,
+    toolName: string,
+    approved: boolean
+  ) => void
 }
 
 export function MessagePartsRenderer({
@@ -222,4 +249,3 @@ export function MessagePartsRenderer({
     </div>
   )
 }
-
