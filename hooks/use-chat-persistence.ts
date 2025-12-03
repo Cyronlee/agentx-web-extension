@@ -1,5 +1,5 @@
-import { useChat, type UseChatOptions } from '@ai-sdk/react'
-import { DefaultChatTransport, type UIMessage } from 'ai'
+import { useChat } from '@ai-sdk/react'
+import { DefaultChatTransport, type UIMessage, type FinishReason } from 'ai'
 import { nanoid } from 'nanoid'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -26,6 +26,15 @@ interface UseChatPersistenceOptions {
   conversationId?: string
   onConversationUpdate?: () => void
 }
+
+// Finish reasons that indicate the message is complete and should be persisted
+const TERMINAL_FINISH_REASONS: FinishReason[] = [
+  'stop',
+  'length',
+  'content-filter',
+  'error',
+  'other',
+]
 
 export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
   const [conversation, setConversation] = useState<Conversation | null>(null)
@@ -62,7 +71,7 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
         }
 
         setConversation(conv)
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Failed to initialize conversation:', err)
         setError(err instanceof Error ? err : new Error('Failed to initialize'))
       } finally {
@@ -93,7 +102,21 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
   const chatResult = useChat({
     id: conversation?.id,
     transport,
-    onFinish: async ({ message }) => {
+    onFinish: async (finishOptions: {
+      message: UIMessage
+      finishReason?: FinishReason
+    }) => {
+      const { message, finishReason } = finishOptions
+
+      // Only save when the message is truly complete
+      // Skip saving when finishReason is 'tool-calls' as the conversation will continue
+      if (!finishReason || !TERMINAL_FINISH_REASONS.includes(finishReason)) {
+        console.log(
+          `[useChatPersistence] Skipping save: finishReason=${finishReason}`
+        )
+        return
+      }
+
       // Save assistant message when streaming finishes
       if (conversation && message.role === 'assistant') {
         const existingMessage = processedMessageIds.current.has(message.id)
@@ -103,10 +126,12 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
             parts: message.parts,
             metadata: message.metadata,
           })
+          console.log(`[useChatPersistence] Updated message: ${message.id}`)
         } else {
           // Save new message
           await addMessage(uiMessageToStoredMessage(message, conversation.id))
           processedMessageIds.current.add(message.id)
+          console.log(`[useChatPersistence] Saved new message: ${message.id}`)
         }
 
         // Update conversation title if this is the first exchange
@@ -119,7 +144,9 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
               (p) => p.type === 'text'
             )
             if (textPart && 'text' in textPart) {
-              const title = textPart.text.slice(0, 50) + (textPart.text.length > 50 ? '...' : '')
+              const title =
+                textPart.text.slice(0, 50) +
+                (textPart.text.length > 50 ? '...' : '')
               await updateConversation(conversation.id, { title })
               setConversation((prev) => (prev ? { ...prev, title } : prev))
               // Notify parent to refresh conversations list
@@ -129,11 +156,11 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
         }
       }
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       console.error('Chat error:', err)
-      setError(err instanceof Error ? err : new Error('Chat error'))
+      setError(err)
     },
-  } as UseChatOptions)
+  })
 
   // Load initial messages from IndexedDB
   useEffect(() => {
@@ -141,21 +168,25 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
       if (!conversation) return
 
       try {
-        const storedMessages = await getMessagesByConversationId(conversation.id)
+        const storedMessages = await getMessagesByConversationId(
+          conversation.id
+        )
         if (storedMessages.length > 0) {
           const uiMessages = storedMessages.map(storedMessageToUIMessage)
           chatResult.setMessages(uiMessages)
           // Mark all loaded messages as processed
-          storedMessages.forEach((msg) => processedMessageIds.current.add(msg.id))
+          storedMessages.forEach((msg) =>
+            processedMessageIds.current.add(msg.id)
+          )
           lastMessageCountRef.current = storedMessages.length
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Failed to load messages:', err)
       }
     }
 
     loadMessages()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversation?.id])
 
   // Custom sendMessage that saves user message first
@@ -166,13 +197,20 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
         return
       }
 
-      // If messageOptions has text, create and save user message
-      if (messageOptions?.text) {
+      // Extract parts from messageOptions
+      const parts =
+        messageOptions && 'parts' in messageOptions
+          ? messageOptions.parts
+          : undefined
+      const hasParts = parts && parts.length > 0
+
+      if (hasParts && parts) {
         const userMessageId = nanoid()
+
         const userMessage: UIMessage = {
           id: userMessageId,
           role: 'user',
-          parts: [{ type: 'text', text: messageOptions.text }],
+          parts: parts,
         }
 
         // Save to IndexedDB

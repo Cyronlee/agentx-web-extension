@@ -28,6 +28,7 @@ date: 2025-12-03
 
 - [[background-script]] - Background service worker lifecycle
 - [[content-script]] - Content script injection and page interaction
+- [[chat-view-components]] - Chat UI components and message rendering
 
 ### AI & Backend
 

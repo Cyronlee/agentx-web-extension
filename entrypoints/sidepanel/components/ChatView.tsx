@@ -3,11 +3,7 @@ import {
   ConversationContent,
   ConversationScrollButton,
 } from '@/components/ai-elements/conversation'
-import {
-  Message,
-  MessageContent,
-  MessageResponse,
-} from '@/components/ai-elements/message'
+import { Message } from '@/components/ai-elements/message'
 import {
   ModelSelector,
   ModelSelectorContent,
@@ -30,18 +26,6 @@ import {
   PromptInputTools,
 } from '@/components/ai-elements/prompt-input'
 import {
-  Reasoning,
-  ReasoningContent,
-  ReasoningTrigger,
-} from '@/components/ai-elements/reasoning'
-import {
-  Source,
-  Sources,
-  SourcesContent,
-  SourcesTrigger,
-} from '@/components/ai-elements/sources'
-import { Button } from '@/components/ui/button'
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -49,63 +33,22 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Spinner } from '@/components/ui/spinner'
 import { useChatPersistence } from '@/hooks/use-chat-persistence'
+import { useFileUpload, type FilePart } from '@/hooks/use-file-upload'
 import { cn } from '@/lib/utils'
-import { isToolUIPart, getToolName } from 'ai'
+import { isToolUIPart } from 'ai'
 import {
   ArrowUpIcon,
-  CameraIcon,
   CheckIcon,
-  ChevronDownIcon,
   FileIcon,
   ImageIcon,
-  LightbulbIcon,
   PaperclipIcon,
-  ScreenShareIcon,
-  SearchIcon,
   SquareIcon,
-  Wrench,
-  CheckCircle,
-  XCircle,
+  XIcon,
 } from 'lucide-react'
 import { useState } from 'react'
-import { toast } from 'sonner'
-
-// Human-in-the-loop approval states (must match backend)
-const APPROVAL = {
-  YES: 'Yes, confirmed.',
-  NO: 'No, denied.',
-} as const
-
-const models = [
-  {
-    id: 'openai/gpt-4o',
-    name: 'GPT-4o',
-    chef: 'OpenAI',
-    chefSlug: 'openai',
-    providers: ['openai'],
-  },
-  {
-    id: 'openai/gpt-4o-mini',
-    name: 'GPT-4o Mini',
-    chef: 'OpenAI',
-    chefSlug: 'openai',
-    providers: ['openai'],
-  },
-  {
-    id: 'anthropic/claude-sonnet-4-20250514',
-    name: 'Claude Sonnet 4',
-    chef: 'Anthropic',
-    chefSlug: 'anthropic',
-    providers: ['anthropic'],
-  },
-  {
-    id: 'google/gemini-2.5-flash',
-    name: 'Gemini 2.0 Flash',
-    chef: 'Google',
-    chefSlug: 'google',
-    providers: ['google'],
-  },
-]
+import { models, DEFAULT_MODEL_ID } from '../lib/models'
+import { MessagePartsRenderer } from './MessageParts'
+import { APPROVAL } from './ToolConfirmation'
 
 interface ChatViewProps {
   conversationId: string
@@ -116,10 +59,21 @@ export function ChatView({
   conversationId,
   onConversationUpdate,
 }: ChatViewProps) {
-  const [model, setModel] = useState<string>(models[0].id)
+  const [model, setModel] = useState<string>(DEFAULT_MODEL_ID)
   const [modelSelectorOpen, setModelSelectorOpen] = useState(false)
   const [text, setText] = useState<string>('')
-  const [useWebSearch, setUseWebSearch] = useState<boolean>(false)
+
+  const {
+    files,
+    fileInputRef,
+    openFileDialog,
+    handleFileChange,
+    removeFile,
+    clearFiles,
+    getFileParts,
+    hasFiles,
+    fileCount,
+  } = useFileUpload()
 
   const {
     messages,
@@ -141,16 +95,25 @@ export function ChatView({
     )
   )
 
-  const handleSubmit = (message: PromptInputMessage) => {
+  const handleSubmit = async (message: PromptInputMessage) => {
     const hasText = Boolean(message.text)
-    const hasAttachments = Boolean(message.files?.length)
+    if (!(hasText || hasFiles)) return
 
-    if (!(hasText || hasAttachments)) {
-      return
+    // Convert files to data URLs if any
+    const fileParts = hasFiles ? await getFileParts() : []
+
+    // Build message parts
+    const parts: Array<{ type: 'text'; text: string } | FilePart> = []
+    if (message.text) {
+      parts.push({ type: 'text', text: message.text })
     }
+    parts.push(...fileParts)
 
-    sendMessage({ text: message.text || '' })
+    sendMessage({ parts })
+
+    // Clear inputs
     setText('')
+    clearFiles()
   }
 
   const handleToolConfirmation = async (
@@ -164,12 +127,6 @@ export function ChatView({
       output: approved ? APPROVAL.YES : APPROVAL.NO,
     })
     sendMessage() // Continue the conversation after tool confirmation
-  }
-
-  const handleFileAction = (action: string) => {
-    toast.success('File action', {
-      description: action,
-    })
   }
 
   // Show loading state while initializing
@@ -191,213 +148,25 @@ export function ChatView({
     )
   }
 
+  const isStreaming = status === 'streaming'
+
   return (
     <div className="relative flex size-full flex-col divide-y overflow-hidden bg-secondary">
       <Conversation>
         <ConversationContent>
-          {messages.map((message) => (
+          {messages.map((message, index) => (
             <Message
               from={message.role as 'user' | 'assistant'}
               key={message.id}
             >
-              <div>
-                {/* Render sources if available */}
-                {message.parts.some((p) => p.type === 'source-url') && (
-                  <Sources>
-                    <SourcesTrigger
-                      count={
-                        message.parts.filter((p) => p.type === 'source-url')
-                          .length
-                      }
-                    />
-                    <SourcesContent>
-                      {message.parts
-                        .filter((p) => p.type === 'source-url')
-                        .map((part, index) => {
-                          if (part.type === 'source-url') {
-                            return (
-                              <Source
-                                href={part.url}
-                                key={`${part.url}-${index}`}
-                                title={part.title || new URL(part.url).hostname}
-                              />
-                            )
-                          }
-                          return null
-                        })}
-                    </SourcesContent>
-                  </Sources>
-                )}
-
-                {/* Render reasoning if available */}
-                {message.parts.some((p) => p.type === 'reasoning') && (
-                  <Reasoning duration={0} isStreaming={status === 'streaming'}>
-                    <ReasoningTrigger />
-                    <ReasoningContent>
-                      {message.parts
-                        .filter((p) => p.type === 'reasoning')
-                        .map((part) => {
-                          if (part.type === 'reasoning') {
-                            return part.text
-                          }
-                          return ''
-                        })
-                        .join('')}
-                    </ReasoningContent>
-                  </Reasoning>
-                )}
-
-                {/* Render tool invocations with confirmation UI */}
-                {message.parts
-                  .filter((p) => isToolUIPart(p))
-                  .map((part) => {
-                    if (!isToolUIPart(part)) return null
-                    const toolName = getToolName(part)
-                    const toolCallId = part.toolCallId
-
-                    // Tool waiting for confirmation
-                    if (part.state === 'input-available') {
-                      return (
-                        <div
-                          key={toolCallId}
-                          className="my-2 rounded-lg border bg-background p-3"
-                        >
-                          <div className="flex items-center gap-2 mb-2">
-                            <Wrench className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">
-                              Tool Request
-                            </span>
-                          </div>
-                          <div className="text-sm mb-2">
-                            <span className="text-muted-foreground">
-                              Execute{' '}
-                            </span>
-                            <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">
-                              {toolName}
-                            </code>
-                          </div>
-                          <div className="text-xs text-muted-foreground bg-muted rounded p-2 mb-3 font-mono overflow-auto max-h-32">
-                            {JSON.stringify(part.input, null, 2)}
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() =>
-                                handleToolConfirmation(
-                                  toolCallId,
-                                  toolName,
-                                  true
-                                )
-                              }
-                              className="flex-1"
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                handleToolConfirmation(
-                                  toolCallId,
-                                  toolName,
-                                  false
-                                )
-                              }
-                              className="flex-1"
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Deny
-                            </Button>
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    // Tool completed (has output)
-                    if (part.state === 'output-available') {
-                      const isError =
-                        typeof part.output === 'string' &&
-                        part.output.startsWith('Error')
-                      return (
-                        <div
-                          key={toolCallId}
-                          className={cn(
-                            'my-2 rounded-lg border p-3',
-                            isError
-                              ? 'border-destructive/50 bg-destructive/10'
-                              : 'border-green-500/50 bg-green-500/10'
-                          )}
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            {isError ? (
-                              <XCircle className="h-4 w-4 text-destructive" />
-                            ) : (
-                              <CheckCircle className="h-4 w-4 text-green-500" />
-                            )}
-                            <code className="text-xs font-mono">
-                              {toolName}
-                            </code>
-                          </div>
-                          <div className="text-xs text-muted-foreground font-mono overflow-auto max-h-24">
-                            {typeof part.output === 'string'
-                              ? part.output
-                              : JSON.stringify(part.output, null, 2)}
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    // Tool in progress
-                    return (
-                      <div
-                        key={toolCallId}
-                        className="my-2 rounded-lg border bg-background p-3"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Spinner className="h-4 w-4" />
-                          <code className="text-xs font-mono">{toolName}</code>
-                          <span className="text-xs text-muted-foreground">
-                            Running...
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  })}
-
-                {/* Render text content */}
-                <MessageContent
-                  className={cn(
-                    'group-[.is-user]:rounded-[24px] group-[.is-user]:rounded-br-sm group-[.is-user]:border group-[.is-user]:bg-background group-[.is-user]:text-foreground',
-                    'group-[.is-assistant]:bg-transparent group-[.is-assistant]:p-0 group-[.is-assistant]:text-foreground'
-                  )}
-                >
-                  <MessageResponse>
-                    {message.parts
-                      .filter((p) => p.type === 'text')
-                      .map((part) => {
-                        if (part.type === 'text') {
-                          return part.text
-                        }
-                        return ''
-                      })
-                      .join('')}
-                  </MessageResponse>
-                </MessageContent>
-              </div>
+              <MessagePartsRenderer
+                message={message}
+                isLastMessage={index === messages.length - 1}
+                isStreaming={isStreaming}
+                onToolConfirm={handleToolConfirmation}
+              />
             </Message>
           ))}
-
-          {/* Show loading indicator when waiting for response */}
-          {status === 'submitted' && (
-            <Message from="assistant">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Spinner className="h-4 w-4" />
-                <span className="text-sm">Thinking...</span>
-              </div>
-            </Message>
-          )}
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
@@ -407,6 +176,32 @@ export function ChatView({
           className="divide-y-0 rounded-[28px]"
           onSubmit={handleSubmit}
         >
+          {/* File preview section */}
+          {hasFiles && (
+            <div className="flex flex-wrap gap-2 px-4 pt-3">
+              {Array.from(files!).map((file, index) => (
+                <div
+                  key={`${file.name}-${index}`}
+                  className="flex items-center gap-2 rounded-lg bg-muted px-3 py-1.5 text-sm"
+                >
+                  {file.type.startsWith('image/') ? (
+                    <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <FileIcon className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <span className="max-w-[150px] truncate">{file.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeFile(index)}
+                    className="ml-1 rounded-full p-0.5 hover:bg-background"
+                  >
+                    <XIcon className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           <PromptInputTextarea
             className="px-5 md:text-base"
             onChange={(event) => setText(event.target.value)}
@@ -418,71 +213,59 @@ export function ChatView({
             value={text}
             disabled={hasPendingToolConfirmation}
           />
+
           <PromptInputFooter className="p-2.5">
             <PromptInputTools>
+              {/* Hidden file input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+                multiple
+              />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <PromptInputButton
-                    className="!rounded-full border text-foreground"
+                    className={cn(
+                      '!rounded-full border text-foreground',
+                      hasFiles && 'bg-primary text-primary-foreground'
+                    )}
                     variant="outline"
                   >
                     <PaperclipIcon size={16} />
+                    {hasFiles && <span className="text-xs">{fileCount}</span>}
                     <span className="sr-only">Attach</span>
                   </PromptInputButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
-                  <DropdownMenuItem
-                    onClick={() => handleFileAction('upload-file')}
-                  >
+                  <DropdownMenuItem onClick={() => openFileDialog()}>
                     <FileIcon className="mr-2" size={16} />
                     Upload file
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleFileAction('upload-photo')}
-                  >
+                  <DropdownMenuItem onClick={() => openFileDialog('image/*')}>
                     <ImageIcon className="mr-2" size={16} />
-                    Upload photo
+                    Upload image
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => handleFileAction('take-screenshot')}
+                    onClick={() => openFileDialog('application/pdf')}
                   >
-                    <ScreenShareIcon className="mr-2" size={16} />
-                    Take screenshot
+                    <FileIcon className="mr-2" size={16} />
+                    Upload PDF
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleFileAction('take-photo')}
-                  >
-                    <CameraIcon className="mr-2" size={16} />
-                    Take photo
-                  </DropdownMenuItem>
+                  {hasFiles && (
+                    <DropdownMenuItem
+                      onClick={clearFiles}
+                      className="text-destructive"
+                    >
+                      <XIcon className="mr-2" size={16} />
+                      Clear attachments
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <div className="flex items-center rounded-full border">
-                <PromptInputButton
-                  className="!rounded-l-full text-foreground"
-                  onClick={() => setUseWebSearch(!useWebSearch)}
-                  variant="ghost"
-                >
-                  <SearchIcon size={16} />
-                  <span>DeepSearch</span>
-                </PromptInputButton>
-                <div className="h-full w-px bg-border" />
-                <PromptInputButton
-                  className="rounded-r-full"
-                  size="icon-sm"
-                  variant="ghost"
-                >
-                  <ChevronDownIcon size={16} />
-                </PromptInputButton>
-              </div>
-              <PromptInputButton
-                className="!rounded-full text-foreground"
-                variant="outline"
-              >
-                <LightbulbIcon size={16} />
-                <span>Think</span>
-              </PromptInputButton>
             </PromptInputTools>
+
             <div className="flex items-center gap-2">
               <ModelSelector
                 onOpenChange={setModelSelectorOpen}
@@ -537,6 +320,7 @@ export function ChatView({
                   </ModelSelectorList>
                 </ModelSelectorContent>
               </ModelSelector>
+
               {status === 'submitted' || status === 'streaming' ? (
                 <PromptInputButton
                   className="rounded-full bg-foreground font-medium text-background"
@@ -552,7 +336,9 @@ export function ChatView({
                   className="rounded-full bg-foreground font-medium text-background"
                   type="submit"
                   variant="default"
-                  disabled={!text.trim() || hasPendingToolConfirmation}
+                  disabled={
+                    (!text.trim() && !hasFiles) || hasPendingToolConfirmation
+                  }
                 >
                   <ArrowUpIcon size={16} />
                   <span className="sr-only">Send</span>
