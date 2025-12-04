@@ -1,15 +1,1 @@
-<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_305_516)">
-<g clip-path="url(#clip1_305_516)">
-<path d="M49.0229 69.1875C54.1272 69.1875 58.265 65.0497 58.265 59.9454V50.7033H59.9454C65.0497 50.7033 69.1875 46.5655 69.1875 41.4612C69.1875 36.357 65.0497 32.2191 59.9454 32.2191H58.265V22.9771C58.265 17.8728 54.1272 13.735 49.0229 13.735H39.7809V12.0546C39.7809 6.95032 35.643 2.8125 30.5388 2.8125C25.4345 2.8125 21.2967 6.95032 21.2967 12.0546V13.735H12.0546C6.95032 13.735 2.8125 17.8728 2.8125 22.9771V32.2191H4.49288C9.59714 32.2191 13.735 36.357 13.735 41.4612C13.735 46.5655 9.59714 50.7033 4.49288 50.7033H2.8125V69.1875H21.2967V67.5071C21.2967 62.4029 25.4345 58.265 30.5388 58.265C35.643 58.265 39.7809 62.4029 39.7809 67.5071V69.1875H49.0229Z" stroke="#67D55E" stroke-width="5.625"/>
-</g>
-</g>
-<defs>
-<clipPath id="clip0_305_516">
-<rect width="72" height="72" fill="white"/>
-</clipPath>
-<clipPath id="clip1_305_516">
-<rect width="72" height="72" fill="white"/>
-</clipPath>
-</defs>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 20 20"><g fill="none"><path fill="url(#SVGDx0DLj5H)" d="M13.18 2H10.5C8.768 7.023 6.823 12.62 6.823 18h6.483a1.75 1.75 0 0 0 1.485-.825l3.998-6.42a1.43 1.43 0 0 0 0-1.51L14.98 3.13A2 2 0 0 0 13.18 2"/><path fill="url(#SVGpR69Vbpe)" fill-opacity="0.5" d="M13.18 2H10.5C8.768 7.023 6.823 12.62 6.823 18h6.483a1.75 1.75 0 0 0 1.485-.825l3.998-6.42a1.43 1.43 0 0 0 0-1.51L14.98 3.13A2 2 0 0 0 13.18 2"/><path fill="url(#SVGFEeptdiY)" d="M13.25 2.001H6.69c-.601 0-1.16.308-1.48.816l-3.942 6.25a1.75 1.75 0 0 0 0 1.867L5.13 17.06c.354.56.96.91 1.619.938l.067.002h.006a2 2 0 0 0 1.969-1.662l.003-.002L11.18 3.953a2 2 0 0 1 2.069-1.952"/><path fill="url(#SVGIBIxBcZq)" fill-opacity="0.4" d="M13.25 2.001H6.69c-.601 0-1.16.308-1.48.816l-3.942 6.25a1.75 1.75 0 0 0 0 1.867L5.13 17.06c.354.56.96.91 1.619.938l.067.002h.006a2 2 0 0 0 1.969-1.662l.003-.002L11.18 3.953a2 2 0 0 1 2.069-1.952"/><defs><radialGradient id="SVGDx0DLj5H" cx="0" cy="0" r="1" gradientTransform="rotate(-87.881 17.698 4.836)scale(23.3302 18.6978)" gradientUnits="userSpaceOnUse"><stop stop-color="#ffc470"/><stop offset=".251" stop-color="#ff835c"/><stop offset=".584" stop-color="#f24a9d"/><stop offset=".871" stop-color="#b339f0"/><stop offset="1" stop-color="#c354ff"/></radialGradient><radialGradient id="SVGpR69Vbpe" cx="0" cy="0" r="1" gradientTransform="matrix(-9.9932 -9.83058 9.94854 -10.1131 11.777 16.154)" gradientUnits="userSpaceOnUse"><stop offset=".709" stop-color="#ffb357" stop-opacity="0"/><stop offset=".942" stop-color="#ffb357"/></radialGradient><radialGradient id="SVGFEeptdiY" cx="0" cy="0" r="1" gradientTransform="rotate(-160.247 10.243 6.665)scale(22.9945 19.4416)" gradientUnits="userSpaceOnUse"><stop offset=".222" stop-color="#4e46e2"/><stop offset=".578" stop-color="#625df6"/><stop offset=".955" stop-color="#e37dff"/></radialGradient><linearGradient id="SVGIBIxBcZq" x1="4.823" x2="10.254" y1="8.629" y2="9.914" gradientUnits="userSpaceOnUse"><stop stop-color="#7563f7" stop-opacity="0"/><stop offset=".986" stop-color="#4916ae"/></linearGradient></defs></g></svg>

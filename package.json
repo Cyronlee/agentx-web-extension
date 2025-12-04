@@ -1,6 +1,6 @@
 {
-  "name": "sidepanel-extension-template",
-  "description": "A modern browser extension template with sidepanel support, built with WXT + Tailwind CSS 4.0 + shadcn/ui",
+  "name": "agentx-web-extension",
+  "description": "AgentX Web Extension",
   "private": true,
   "version": "1.0.0",
   "type": "module",

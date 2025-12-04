@@ -15,11 +15,11 @@ A modern browser extension template with sidepanel support, built with WXT + Tai
 - 🔧 **TypeScript** - Full type safety and developer experience
 - 🎯 **Modern Development** - Hot reload, modern build tools
 
-## Demo
+## Screenshot
 
-![Extension Demo](public/demo.gif)
+![Extension Demo](public/image/screenshot.png)
 
-*Watch how the sidepanel extension works: click the extension icon to open the sidepanel interface.*
+_Watch how the sidepanel extension works: click the extension icon to open the sidepanel interface._
 
 ## Getting Started
 
@@ -31,17 +31,20 @@ A modern browser extension template with sidepanel support, built with WXT + Tai
 ### Installation
 
 1. **Clone or use this template**
+
    ```bash
    git clone <repository-url>
    cd sidepanel-extension-template
    ```
 
 2. **Install dependencies**
+
    ```bash
    pnpm install
    ```
 
 3. **Start development**
+
    ```bash
    pnpm dev
    ```
@@ -61,7 +64,6 @@ A modern browser extension template with sidepanel support, built with WXT + Tai
 ## Project Structure
 
 ```
-sidepanel-extension-template/
 ├── entrypoints/           # Extension entry points
 │   ├── background.ts      # Background script
 │   ├── content.ts         # Content script (optional)

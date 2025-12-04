@@ -38,7 +38,6 @@ agentx-web-extension/
 │   └── react.svg
 ├── public/                   # Public assets (copied to build)
 │   ├── icon/                 # Extension icons (16, 32, 48, 96, 128)
-│   ├── demo.gif
 │   └── wxt.svg
 ├── .memory/                  # Project memory files (AI context)
 ├── app.config.ts             # Runtime configuration with env vars
