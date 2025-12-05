@@ -1,52 +1,32 @@
 ---
 title: Tech Stack
-tags: [stack, dependencies, tools]
-date: 2025-12-01
+tags: [stack, dependencies]
+date: 2025-12-05
 ---
 
 # Tech Stack
 
-## Core Framework
+## Frontend (Extension)
 
-- **WXT** (v0.20.6) - Next-gen Web Extension Framework with hot reload
-- **React** (v19.1.0) - UI library with latest features
-- **TypeScript** (v5.8.3) - Type-safe development
+- **WXT** v0.20.6 - Web Extension Framework
+- **React** v19.1.0 - UI library
+- **TypeScript** v5.8.3 - Type safety
+- **Tailwind CSS** v4.1.11 - Styling
+- **shadcn/ui** - Component library (Radix UI + Tailwind)
+- **@ai-sdk/react** - Chat hooks
+- **idb** - IndexedDB wrapper
 
-## Build & Package Management
+## Backend
 
-- **pnpm** (v9.10.0) - Fast, disk-efficient package manager
-- **Vite** - Modern build tool (via WXT)
+- **Express** v5.1.0 - HTTP server
+- **AI SDK** v5.0.104 - LLM integration
+- **@ai-sdk/google** - Google AI provider
+- **@ai-sdk/mcp** - MCP tool support
 
-## Styling
+## Package Manager
 
-- **Tailwind CSS** (v4.1.11) - Latest version with new CSS-first configuration
-- **@tailwindcss/vite** (v4.1.11) - Vite plugin for Tailwind CSS 4.0
-- **tw-animate-css** (v1.3.4) - Animation utilities
+pnpm v9.10.0
 
-## UI Components
+## Related
 
-- **shadcn/ui** - Component system based on:
-  - **Radix UI** - Unstyled, accessible components (@radix-ui/react-\*)
-  - **lucide-react** (v0.525.0) - Icon library
-  - **class-variance-authority** (v0.7.1) - Component variants
-  - **clsx** + **tailwind-merge** - Class name utilities
-
-## WXT Modules
-
-- **@wxt-dev/module-react** (v1.1.3) - React integration for WXT
-
-## Browser APIs Used
-
-- `browser.sidePanel` - Sidepanel API
-- `browser.action` - Extension action (icon click)
-- `browser.storage` - Persistent storage (via WXT Storage wrapper)
-- `browser.runtime` - Extension lifecycle events
-
-## Development Tools
-
-- TypeScript compiler with strict mode
-- WXT dev server with hot module replacement
-
-## Reference
-
-See [[project-overview]], [[wxt-configuration]]
+See [[project-overview]], [[backend]]

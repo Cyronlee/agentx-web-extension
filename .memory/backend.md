@@ -1,56 +1,40 @@
 ---
 title: Backend Server
-tags: [backend, express, ai-sdk, mcp]
-date: 2025-12-03
+tags: [backend, express, ai-sdk]
+date: 2025-12-05
 ---
 
 # Backend Server
 
-Express backend server providing AI chat API with MCP tool support and human-in-the-loop functionality.
+Express backend providing AI chat API with MCP tool support.
 
 ## Location
 
-`backend/` folder in project root
-
-## Technology Stack
-
-- **Express 5.x** - HTTP server
-- **AI SDK** - `ai`, `@ai-sdk/google`, `@ai-sdk/mcp`
-- **TypeScript** - Full type safety
-- **tsx** - Development runtime
+`backend/` folder
 
 ## Scripts
 
-From project root:
-
 ```bash
-pnpm backend:install  # Install backend dependencies
-pnpm backend:dev      # Development with hot reload
-pnpm backend:build    # Build for production
-pnpm backend:start    # Start production server
+pnpm backend:install  # Install dependencies
+pnpm backend:dev      # Development (tsx watch)
+pnpm backend:build    # Build TypeScript
+pnpm backend:start    # Production
 ```
 
-## API Endpoints
+## API
 
 ### POST /api/chat
 
-Main chat endpoint with streaming response.
+Streaming chat endpoint.
 
-**Request Body**:
+**Request**:
 
 ```typescript
 {
   messages: UIMessage[]
-  mcpConfig?: {
-    mcpServers: Record<string, MCPServerConfig>
-  }
-  apiKeys?: {
-    aiGateway?: string
-    google?: string
-    openai?: string
-    anthropic?: string
-  }
-  model?: string  // e.g., "openai/gpt-4o", "google/gemini-2.5-flash"
+  mcpConfig?: { mcpServers: Record<string, MCPServerConfig> }
+  apiKeys?: { aiGateway?, google?, openai?, anthropic? }
+  model?: string  // e.g., "google/gemini-2.5-flash"
 }
 ```
 
@@ -58,67 +42,31 @@ Main chat endpoint with streaming response.
 
 ### GET /health
 
-Health check endpoint.
-
-## Architecture
-
-### File Structure
-
-```
-backend/
-├── src/
-│   ├── index.ts           # Server entry point
-│   ├── types.ts           # Type definitions
-│   ├── routes/
-│   │   └── chat.ts        # Chat API route
-│   ├── mcp/
-│   │   └── client.ts      # MCP client management
-│   └── utils/
-│       └── hitl.ts        # Human-in-the-loop utilities
-├── package.json
-├── tsconfig.json
-└── .env.example
-```
-
-### MCP Client Management
-
-- Creates MCP clients from configuration
-- Supports stdio, HTTP, and SSE transports
-- Prefixes tool names with server name: `serverName__toolName`
-- Closes connections after streaming completes
-
-### Human-in-the-loop (HITL)
-
-All MCP tools require user confirmation before execution:
-
-1. Tool calls are forwarded to frontend without execution
-2. Frontend shows approval UI
-3. User approves or denies
-4. Backend executes approved tools and updates results
-
-**Approval States**:
-
-```typescript
-const APPROVAL = {
-  YES: 'Yes, confirmed.',
-  NO: 'No, denied.',
-}
-```
-
-## Environment Variables
-
-```
-AI_GATEWAY_API_KEY=      # Vercel AI Gateway
-GOOGLE_GENERATIVE_AI_API_KEY=  # Google AI
-PORT=3001                # Server port
-```
+Health check.
 
 ## Model Support
 
-- **Vercel AI Gateway**: Default, uses `openai/gpt-4o` format
-- **Google AI**: Use `google/` prefix, e.g., `google/gemini-2.5-flash`
+- `google/*` - Google AI (gemini-2.5-flash, etc.)
+- `openai/*` - Via AI Gateway
+- `anthropic/*` - Via AI Gateway
+
+Default: `google/gemini-2.5-flash-lite`
+
+## MCP Integration
+
+- Creates MCP clients from config
+- Supports stdio, HTTP, SSE transports
+- Tool names prefixed: `serverName__toolName`
+- Human-in-the-loop for all tool executions
+
+## Environment
+
+```
+GOOGLE_GENERATIVE_AI_API_KEY=
+AI_GATEWAY_API_KEY=
+PORT=3001
+```
 
 ## Related
 
-- [[mcp-integration]] - MCP configuration and tools
-- [[ai-sdk-integration]] - Frontend AI SDK usage
+See [[mcp-integration]], [[ai-sdk-integration]]
