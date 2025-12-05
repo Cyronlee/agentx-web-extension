@@ -1,4 +1,6 @@
 import {
+  MessageAttachment,
+  MessageAttachments,
   MessageContent,
   MessageResponse,
 } from '@/components/ai-elements/message'
@@ -23,7 +25,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { isToolUIPart, getToolName, type UIMessage } from 'ai'
-import { CheckCircle, FileIcon, XCircle } from 'lucide-react'
+import { CheckCircle, XCircle } from 'lucide-react'
 
 type MessagePart = UIMessage['parts'][number]
 
@@ -125,73 +127,59 @@ export function ToolPart({ part, onConfirm }: ToolPartProps) {
   )
 }
 
-interface FilePartDisplayProps {
-  parts: MessagePart[]
-  messageId: string
+interface UserMessageContentProps {
+  message: UIMessage
 }
 
-export function FilePartDisplay({ parts, messageId }: FilePartDisplayProps) {
-  const fileParts = parts.filter((p) => p.type === 'file')
-  if (fileParts.length === 0) return null
-
-  return (
-    <div className="mb-2 flex flex-wrap gap-2">
-      {fileParts.map((part, index) => {
-        if (part.type !== 'file') return null
-        const isImage = part.mediaType?.startsWith('image/')
-        return (
-          <div
-            key={`file-${messageId}-${index}`}
-            className="overflow-hidden rounded-lg border bg-muted/50"
-          >
-            {isImage && part.url ? (
-              <img
-                src={part.url}
-                alt={part.filename || 'Attached image'}
-                className="max-h-[200px] max-w-[200px] object-cover"
-              />
-            ) : (
-              <div className="flex items-center gap-2 px-3 py-2">
-                <FileIcon className="h-4 w-4 text-muted-foreground" />
-                <span className="max-w-[150px] truncate text-sm">
-                  {part.filename || 'Attachment'}
-                </span>
-              </div>
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-interface TextPartProps {
-  parts: MessagePart[]
-  isUser: boolean
-}
-
-export function TextPart({ parts, isUser }: TextPartProps) {
-  const textContent = parts
+/**
+ * Renders user message content with text and file attachments
+ * Following the reference UI pattern: attachments displayed above text
+ */
+export function UserMessageContent({ message }: UserMessageContentProps) {
+  const textContent = message.parts
     .filter((p) => p.type === 'text')
     .map((part) => (part.type === 'text' ? part.text : ''))
     .join('')
 
-  if (!textContent) return null
+  const fileParts = message.parts.filter((p) => p.type === 'file')
+  const hasFiles = fileParts.length > 0
+  const hasText = Boolean(textContent)
+
+  if (!hasFiles && !hasText) return null
 
   return (
-    <MessageContent
-      className={cn(
-        isUser &&
-          'rounded-[24px] rounded-br-sm border bg-background text-foreground',
-        !isUser && 'bg-transparent p-0 text-foreground'
+    <div className="flex flex-col items-end gap-2">
+      {/* File attachments - displayed as thumbnails above text */}
+      {hasFiles && (
+        <MessageAttachments>
+          {fileParts.map((part, index) => {
+            if (part.type !== 'file') return null
+            return (
+              <MessageAttachment
+                key={`file-${message.id}-${index}`}
+                data={{
+                  type: 'file',
+                  url: part.url,
+                  mediaType: part.mediaType || 'application/octet-stream',
+                  filename: part.filename,
+                }}
+              />
+            )
+          })}
+        </MessageAttachments>
       )}
-    >
-      <MessageResponse>{textContent}</MessageResponse>
-    </MessageContent>
+
+      {/* Text content - styled as user message bubble */}
+      {hasText && (
+        <MessageContent className="group-[.is-user]:rounded-[24px] group-[.is-user]:rounded-br-sm group-[.is-user]:border group-[.is-user]:bg-background group-[.is-user]:text-foreground">
+          <MessageResponse>{textContent}</MessageResponse>
+        </MessageContent>
+      )}
+    </div>
   )
 }
 
-interface MessagePartsRendererProps {
+interface AssistantMessageContentProps {
   message: UIMessage
   isLastMessage: boolean
   isStreaming: boolean
@@ -202,16 +190,22 @@ interface MessagePartsRendererProps {
   ) => void
 }
 
-export function MessagePartsRenderer({
+/**
+ * Renders assistant message content with sources, reasoning, tools, and text
+ */
+export function AssistantMessageContent({
   message,
   isLastMessage,
   isStreaming,
   onToolConfirm,
-}: MessagePartsRendererProps) {
-  const isUser = message.role === 'user'
+}: AssistantMessageContentProps) {
+  const textContent = message.parts
+    .filter((p) => p.type === 'text')
+    .map((part) => (part.type === 'text' ? part.text : ''))
+    .join('')
 
   return (
-    <div>
+    <div className="flex flex-col gap-2">
       {/* Sources */}
       <SourcesPart parts={message.parts} />
 
@@ -241,11 +235,45 @@ export function MessagePartsRenderer({
           />
         ))}
 
-      {/* File attachments */}
-      <FilePartDisplay parts={message.parts} messageId={message.id} />
-
-      {/* Text content */}
-      <TextPart parts={message.parts} isUser={isUser} />
+      {/* Text content - assistant style (no bubble) */}
+      {textContent && (
+        <MessageContent className="group-[.is-assistant]:bg-transparent group-[.is-assistant]:p-0 group-[.is-assistant]:text-foreground">
+          <MessageResponse>{textContent}</MessageResponse>
+        </MessageContent>
+      )}
     </div>
+  )
+}
+
+interface MessagePartsRendererProps {
+  message: UIMessage
+  isLastMessage: boolean
+  isStreaming: boolean
+  onToolConfirm: (
+    toolCallId: string,
+    toolName: string,
+    approved: boolean
+  ) => void
+}
+
+export function MessagePartsRenderer({
+  message,
+  isLastMessage,
+  isStreaming,
+  onToolConfirm,
+}: MessagePartsRendererProps) {
+  const isUser = message.role === 'user'
+
+  if (isUser) {
+    return <UserMessageContent message={message} />
+  }
+
+  return (
+    <AssistantMessageContent
+      message={message}
+      isLastMessage={isLastMessage}
+      isStreaming={isStreaming}
+      onToolConfirm={onToolConfirm}
+    />
   )
 }
