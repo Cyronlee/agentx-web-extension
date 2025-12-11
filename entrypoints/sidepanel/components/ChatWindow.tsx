@@ -3,6 +3,7 @@ import { useChatPersistence } from '@/hooks/use-chat-persistence'
 import type { PromptInputMessage } from '@/components/ai-elements/prompt-input'
 import { isToolUIPart } from 'ai'
 import { useCallback, useState } from 'react'
+import { toast } from 'sonner'
 
 import { ChatInput } from './ChatInput'
 import { ConversationView } from './ConversationView'
@@ -17,14 +18,11 @@ interface ChatViewProps {
 /**
  * ChatView - Main chat interface container
  *
- * Single responsibility: Orchestrate chat functionality
- * - Manages chat persistence and API communication
+ * Responsibilities:
+ * - Orchestrates chat functionality via useChatPersistence hook
  * - Coordinates between ConversationView and ChatInput
- * - Handles tool confirmations
- *
- * State:
- * - Chat state from useChatPersistence hook
- * - Screenshot capture state (local)
+ * - Handles tool confirmations and screenshot capture
+ * - Displays error notifications via toast
  */
 export function ChatView({
   conversationId,
@@ -33,6 +31,7 @@ export function ChatView({
 }: ChatViewProps) {
   const [isCapturing, setIsCapturing] = useState(false)
 
+  // Initialize chat with error handler
   const {
     messages,
     sendMessage,
@@ -44,15 +43,24 @@ export function ChatView({
     conversation,
     agent,
     refreshAgent,
-  } = useChatPersistence({ conversationId, onConversationUpdate })
+  } = useChatPersistence({
+    conversationId,
+    onConversationUpdate,
+    onError: (err) => {
+      toast.error(err.message || 'An unexpected error occurred')
+    },
+  })
 
-  // Screenshot capture function
+  // Screenshot capture handler
   const captureScreenshot = useCallback(async (): Promise<string | null> => {
     try {
       setIsCapturing(true)
       const currentWindow = await browser.windows.getCurrent()
+
       if (!currentWindow?.id) {
-        console.error('No current window found')
+        toast.error('Screenshot Failed', {
+          description: 'No active window found',
+        })
         return null
       }
 
@@ -62,23 +70,21 @@ export function ChatView({
       return dataUrl
     } catch (error) {
       console.error('Failed to capture screenshot:', error)
+      toast.error('Screenshot Failed', {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      })
       return null
     } finally {
       setIsCapturing(false)
     }
   }, [])
 
-  // Check if there's a pending tool confirmation
-  const hasPendingToolConfirmation = messages.some((m) =>
-    m.parts?.some(
-      (part) => isToolUIPart(part) && part.state === 'input-available'
-    )
-  )
-
+  // Message submission handler
   const handleSubmit = useCallback(
     (message: PromptInputMessage) => {
       const hasText = Boolean(message.text)
       const hasFiles = Boolean(message.files?.length)
+
       if (!(hasText || hasFiles)) return
 
       // Build message parts from the PromptInput message
@@ -107,6 +113,7 @@ export function ChatView({
     [sendMessage]
   )
 
+  // Tool confirmation handler
   const handleToolConfirmation = useCallback(
     async (toolCallId: string, toolName: string, approved: boolean) => {
       await addToolOutput({
@@ -128,7 +135,7 @@ export function ChatView({
     )
   }
 
-  // Error state
+  // Error state - only show if conversation failed to load
   if (error && !conversation) {
     return (
       <div className="flex size-full flex-col items-center justify-center gap-4 bg-secondary p-4">
@@ -138,10 +145,17 @@ export function ChatView({
     )
   }
 
+  // Check if there's a pending tool confirmation
+  const hasPendingToolConfirmation = messages.some((m) =>
+    m.parts?.some(
+      (part) => isToolUIPart(part) && part.state === 'input-available'
+    )
+  )
+
   const isStreaming = status === 'streaming'
 
   return (
-    <div className="relative flex size-full flex-col divide-y overflow-hidden bg-secondary">
+    <div className="relative flex size-full flex-col overflow-hidden bg-secondary">
       <ConversationView
         messages={messages}
         isStreaming={isStreaming}

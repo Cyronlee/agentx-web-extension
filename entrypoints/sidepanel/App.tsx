@@ -76,7 +76,7 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <Toaster position="top-center" expand={true} richColors />
+      <Toaster position="top-center" expand={true} richColors closeButton />
 
       <Header
         onNavigate={handleNavigate}

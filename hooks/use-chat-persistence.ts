@@ -28,6 +28,7 @@ const API_URL = 'http://localhost:3001/api/chat'
 interface UseChatPersistenceOptions {
   conversationId?: string
   onConversationUpdate?: () => void
+  onError?: (error: Error) => void
 }
 
 // Finish reasons that indicate the message is complete and should be persisted
@@ -168,6 +169,7 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
     onError: (err: Error) => {
       console.error('Chat error:', err)
       setError(err)
+      options.onError?.(err)
     },
   })
 

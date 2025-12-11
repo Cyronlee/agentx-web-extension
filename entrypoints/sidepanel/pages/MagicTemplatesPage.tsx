@@ -177,57 +177,55 @@ export function MagicTemplatesPage({ onBack }: { onBack: () => void }) {
       </div>
 
       {/* Template List */}
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-2">
-          {templates.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No templates found. Create your first template!
-            </div>
-          ) : (
-            templates.map((template) => (
-              <div
-                key={template.id}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-              >
-                <div className="flex items-center justify-center h-10 w-10 rounded-md bg-primary/10">
-                  <WandSparklesIcon size={18} className="text-primary" />
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium truncate">{template.name}</h3>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {template.template.slice(0, 60)}
-                    {template.template.length > 60 ? '...' : ''}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openEditDialog(template)}
-                    title="Edit template"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openDeleteDialog(template)}
-                    title="Delete template"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+      <div className="p-4 space-y-2 overflow-y-auto">
+        {templates.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No templates found. Create your first template!
+          </div>
+        ) : (
+          templates.map((template) => (
+            <div
+              key={template.id}
+              className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex items-center justify-center h-10 w-10 rounded-md bg-primary/10">
+                <WandSparklesIcon size={18} className="text-primary" />
               </div>
-            ))
-          )}
-        </div>
-      </ScrollArea>
+
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium truncate">{template.name}</h3>
+                <p className="text-xs text-muted-foreground truncate">
+                  {template.template.slice(0, 60)}
+                  {template.template.length > 60 ? '...' : ''}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => openEditDialog(template)}
+                  title="Edit template"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => openDeleteDialog(template)}
+                  title="Delete template"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[80vw]">
           <DialogHeader>
             <DialogTitle>Create Magic Template</DialogTitle>
             <DialogDescription>

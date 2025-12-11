@@ -13,7 +13,7 @@ import {
 import type { Agent } from '@/db'
 import type { ChatStatus } from 'ai'
 import { ArrowUpIcon, SquareIcon } from 'lucide-react'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 
 import { DEFAULT_MODEL_ID } from '../lib/models'
 import { AttachmentMenu } from './AttachmentMenu'
@@ -24,7 +24,7 @@ import { ModelSelectorButton } from './ModelSelectorButton'
 import { useMCPStatus } from '@/hooks/use-mcp-status'
 import { parseAgentMCPConfig } from '@/db'
 import type { ParsedMCPConfig } from '@/types/mcp'
-import { useMemo } from 'react'
+import { useFileInjector, useUriDropHandler } from '@/hooks/use-file-handlers'
 
 // SubmitButton component that can access attachments context
 interface SubmitButtonProps {
@@ -47,6 +47,13 @@ function SubmitButton({ text, disabled }: SubmitButtonProps) {
       <span className="sr-only">Send</span>
     </PromptInputButton>
   )
+}
+
+// FileHandlers component that sets up file injection and URI drop handlers
+function FileHandlers() {
+  useFileInjector()
+  useUriDropHandler()
+  return null
 }
 
 interface ChatInputProps {
@@ -129,20 +136,17 @@ export function ChatInput({
   }, [])
 
   return (
-    <div className="grid shrink-0 gap-4 p-4">
-      <PromptInput
-        className="divide-y-0 rounded-[28px]"
-        onSubmit={handleSubmit}
-        multiple
-      >
-        <PromptInputHeader>
+    <div className="grid shrink-0 gap-4 p-2">
+      <PromptInput onSubmit={handleSubmit} multiple globalDrop>
+        <FileHandlers />
+
+        <PromptInputHeader className="p-0">
           <PromptInputAttachments>
             {(attachment) => <PromptInputAttachment data={attachment} />}
           </PromptInputAttachments>
         </PromptInputHeader>
 
         <PromptInputTextarea
-          className="px-5 md:text-base"
           onChange={(event) => setText(event.target.value)}
           placeholder={
             disabled

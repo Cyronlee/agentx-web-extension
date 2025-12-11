@@ -8,13 +8,8 @@ import {
   PromptInputButton,
   usePromptInputAttachments,
 } from '@/components/ai-elements/prompt-input'
-import {
-  CropIcon,
-  FileIcon,
-  ImageIcon,
-  PaperclipIcon,
-  XIcon,
-} from 'lucide-react'
+import { CropIcon, FileIcon, ImageIcon, PaperclipIcon } from 'lucide-react'
+import { dataUrlToFile } from '@/hooks/use-file-handlers'
 
 interface AttachmentMenuProps {
   onCaptureScreenshot: () => Promise<string | null>
@@ -36,12 +31,7 @@ export function AttachmentMenu({
   const handleScreenshot = async () => {
     const dataUrl = await onCaptureScreenshot()
     if (dataUrl) {
-      // Convert data URL to File and add to attachments
-      const response = await fetch(dataUrl)
-      const blob = await response.blob()
-      const file = new File([blob], `screenshot-${Date.now()}.png`, {
-        type: 'image/png',
-      })
+      const file = await dataUrlToFile(dataUrl)
       attachments.add([file])
     }
   }
@@ -75,20 +65,6 @@ export function AttachmentMenu({
           <CropIcon className="mr-2" size={16} />
           {isCapturing ? 'Capturing...' : 'Capture screenshot'}
         </DropdownMenuItem>
-        {attachments.files.length > 0 && (
-          <>
-            <DropdownMenuItem disabled className="text-xs opacity-70">
-              {attachments.files.map((f) => f.filename).join(', ')}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => attachments.clear()}
-              className="text-destructive"
-            >
-              <XIcon className="mr-2" size={16} />
-              Clear attachments
-            </DropdownMenuItem>
-          </>
-        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )

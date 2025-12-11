@@ -140,7 +140,10 @@ export function ConversationSelector({
           showCloseButton={false}
         >
           <Command className="rounded-lg border-0">
-            <CommandInput placeholder="Search conversations..." />
+            <CommandInput
+              placeholder="Search conversations..."
+              className="h-9"
+            />
             <CommandList className="max-h-[400px]">
               <CommandEmpty>No conversations found.</CommandEmpty>
               <CommandGroup>
