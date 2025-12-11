@@ -68,6 +68,12 @@ function App() {
     setCurrentPage('agents')
   }
 
+  const handleConversationDeleted = async () => {
+    await refreshConversations()
+    // If the deleted conversation was the current one, switch to the first available conversation
+    // The refreshConversations will handle updating currentConversationId via the hook
+  }
+
   return (
     <div className="flex flex-col h-screen bg-background">
       <Toaster position="top-center" expand={true} richColors />
@@ -78,6 +84,7 @@ function App() {
         currentConversationId={currentConversationId}
         onSelectConversation={handleSelectConversation}
         onNewChat={() => handleNewChat()}
+        onConversationDeleted={handleConversationDeleted}
         conversationsLoading={conversationsLoading}
       />
 

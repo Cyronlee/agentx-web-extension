@@ -129,9 +129,5 @@ function formatConversationTitle(agent: Agent): string {
     minute: '2-digit',
     hour12: false,
   })
-  const dateStr = now.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  })
-  return `${agent.name} - ${dateStr} ${timeStr}`
+  return `${agent.name} - ${timeStr}`
 }

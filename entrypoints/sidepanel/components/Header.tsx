@@ -1,4 +1,12 @@
-import { Sparkles, Plus, MoreVertical, Settings, Bug, Bot, WandSparkles } from 'lucide-react'
+import {
+  Sparkles,
+  Plus,
+  MoreVertical,
+  Settings,
+  Bug,
+  Bot,
+  WandSparkles,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -10,11 +18,14 @@ import { ConversationSelector } from './ConversationSelector'
 import type { Conversation } from '@/db'
 
 interface HeaderProps {
-  onNavigate: (page: 'chat' | 'settings' | 'debug' | 'demo' | 'agents' | 'magic-templates') => void
+  onNavigate: (
+    page: 'chat' | 'settings' | 'debug' | 'demo' | 'agents' | 'magic-templates'
+  ) => void
   conversations: Conversation[]
   currentConversationId: string | null
   onSelectConversation: (id: string) => void
   onNewChat: () => void
+  onConversationDeleted?: () => void
   conversationsLoading?: boolean
 }
 
@@ -24,6 +35,7 @@ export function Header({
   currentConversationId,
   onSelectConversation,
   onNewChat,
+  onConversationDeleted,
   conversationsLoading,
 }: HeaderProps) {
   return (
@@ -45,6 +57,7 @@ export function Header({
             conversations={conversations}
             currentConversationId={currentConversationId}
             onSelect={onSelectConversation}
+            onConversationDeleted={onConversationDeleted}
             loading={conversationsLoading}
           />
         </div>

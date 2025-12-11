@@ -49,7 +49,9 @@ export function AgentEditPage({
 
   // Form state
   const [name, setName] = useState(DEFAULT_AGENT.name)
-  const [icon, setIcon] = useState(DEFAULT_AGENT.icon)
+  const [icon, setIcon] = useState(
+    DEFAULT_AGENT.icon + '?seed=' + Date.now().toString()
+  )
   const [systemPrompt, setSystemPrompt] = useState(DEFAULT_AGENT.systemPrompt)
   const [mcpServersEnabled, setMcpServersEnabled] = useState(
     DEFAULT_AGENT.mcpServersEnabled

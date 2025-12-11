@@ -67,9 +67,10 @@ export const DB_VERSION = 3
 
 // Default agent
 export const DEFAULT_AGENT: Omit<Agent, 'id' | 'createdAt' | 'updatedAt'> = {
-  name: 'General Assistant',
-  icon: 'https://api.dicebear.com/9.x/bottts/svg?seed=assistant',
-  systemPrompt: 'You are a helpful AI assistant. Be concise and helpful in your responses.',
+  name: 'AgentX',
+  icon: 'https://api.dicebear.com/9.x/bottts/svg',
+  systemPrompt:
+    'You are a helpful AI assistant. Be concise and helpful in your responses.',
   mcpServersEnabled: false,
   mcpServers: '{"mcpServers":{}}',
 }
