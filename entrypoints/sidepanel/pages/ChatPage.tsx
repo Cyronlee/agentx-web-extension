@@ -3,11 +3,13 @@ import { ChatView } from '../components/ChatWindow'
 interface ChatPageProps {
   conversationId: string | null
   onConversationUpdate?: () => void
+  onNavigate?: (page: 'magic-templates') => void
 }
 
 export function ChatPage({
   conversationId,
   onConversationUpdate,
+  onNavigate,
 }: ChatPageProps) {
   if (!conversationId) {
     return (
@@ -22,6 +24,7 @@ export function ChatPage({
       key={conversationId}
       conversationId={conversationId}
       onConversationUpdate={onConversationUpdate}
+      onNavigate={onNavigate}
     />
   )
 }

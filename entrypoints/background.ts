@@ -19,4 +19,68 @@ export default defineBackground(() => {
       openPanelOnActionClick: true
     });
   });
+
+  // Handle messages from sidepanel to get page context
+  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'GET_PAGE_CONTEXT_REQUEST') {
+      console.log('[Background] Received GET_PAGE_CONTEXT_REQUEST')
+      
+      // Get the active tab
+      browser.tabs.query({ active: true, currentWindow: true })
+        .then(async (tabs) => {
+          console.log('[Background] Active tabs:', tabs)
+          const activeTab = tabs[0]
+          
+          if (!activeTab?.id) {
+            console.log('[Background] No active tab found')
+            sendResponse({ selectedText: '', url: '' })
+            return
+          }
+          
+          const tabId = activeTab.id
+          const tabUrl = activeTab.url || ''
+          
+          // Check if URL is restricted
+          const isRestrictedUrl = 
+            tabUrl.startsWith('chrome://') ||
+            tabUrl.startsWith('edge://') ||
+            tabUrl.startsWith('about:') ||
+            tabUrl.startsWith('chrome-extension://') ||
+            tabUrl.includes('chromewebstore.google.com') ||
+            tabUrl.includes('microsoftedge.microsoft.com/addons')
+          
+          if (isRestrictedUrl) {
+            console.log('[Background] Restricted URL, content script cannot be injected')
+            sendResponse({ 
+              selectedText: '', 
+              url: tabUrl
+            })
+            return
+          }
+          
+          console.log('[Background] Sending message to content script in tab:', tabId, 'URL:', tabUrl)
+          
+          try {
+            // Try to send message to content script
+            const response = await browser.tabs.sendMessage(tabId, { type: 'GET_PAGE_CONTEXT' })
+            console.log('[Background] Received response from content script:', response)
+            sendResponse(response)
+          } catch (error) {
+            console.log('[Background] Content script not available:', error)
+            
+            // Content script not loaded - provide fallback response with tab URL
+            // This happens on restricted pages or before content script loads
+            sendResponse({ 
+              selectedText: '', 
+              url: tabUrl
+            })
+          }
+        })
+        .catch((error) => {
+          console.error('[Background] Failed to query tabs:', error)
+          sendResponse({ selectedText: '', url: '' })
+        })
+      return true // Keep the message channel open for async response
+    }
+  });
 });

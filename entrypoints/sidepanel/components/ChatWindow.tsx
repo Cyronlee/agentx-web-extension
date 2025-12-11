@@ -11,6 +11,7 @@ import { APPROVAL } from './ToolConfirmation'
 interface ChatViewProps {
   conversationId: string
   onConversationUpdate?: () => void
+  onNavigate?: (page: 'magic-templates') => void
 }
 
 /**
@@ -28,6 +29,7 @@ interface ChatViewProps {
 export function ChatView({
   conversationId,
   onConversationUpdate,
+  onNavigate,
 }: ChatViewProps) {
   const [isCapturing, setIsCapturing] = useState(false)
 
@@ -155,6 +157,7 @@ export function ChatView({
         isCapturing={isCapturing}
         agent={agent}
         onAgentUpdate={refreshAgent}
+        onNavigateToTemplates={() => onNavigate?.('magic-templates')}
       />
     </div>
   )

@@ -7,9 +7,17 @@ import { SettingsPage } from './pages/SettingsPage'
 import { DebugPage } from './pages/DebugPage'
 import { AgentsPage } from './pages/AgentsPage'
 import { AgentEditPage } from './pages/AgentEditPage'
+import { MagicTemplatesPage } from './pages/MagicTemplatesPage'
 import { ChatView } from './components/ChatDemo'
 
-type Page = 'chat' | 'settings' | 'debug' | 'demo' | 'agents' | 'agent-edit'
+type Page =
+  | 'chat'
+  | 'settings'
+  | 'debug'
+  | 'demo'
+  | 'agents'
+  | 'agent-edit'
+  | 'magic-templates'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('chat')
@@ -79,6 +87,7 @@ function App() {
           <ChatPage
             conversationId={currentConversationId}
             onConversationUpdate={refreshConversations}
+            onNavigate={handleNavigate}
           />
         )}
         {currentPage === 'settings' && (
@@ -100,6 +109,9 @@ function App() {
             onSaved={handleAgentSaved}
             onDeleted={handleAgentDeleted}
           />
+        )}
+        {currentPage === 'magic-templates' && (
+          <MagicTemplatesPage onBack={handleBackToChat} />
         )}
       </div>
     </div>

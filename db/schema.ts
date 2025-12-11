@@ -30,6 +30,14 @@ export interface Message {
   createdAt: number
 }
 
+export interface MagicTemplate {
+  id: string
+  name: string
+  template: string
+  createdAt: number
+  updatedAt: number
+}
+
 // IndexedDB schema
 export interface ChatDBSchema extends DBSchema {
   agents: {
@@ -47,10 +55,15 @@ export interface ChatDBSchema extends DBSchema {
     value: Message
     indexes: { 'by-conversationId': string }
   }
+  magicTemplates: {
+    key: string
+    value: MagicTemplate
+    indexes: { 'by-updatedAt': number }
+  }
 }
 
 export const DB_NAME = 'agentx-chat-db'
-export const DB_VERSION = 2
+export const DB_VERSION = 3
 
 // Default agent
 export const DEFAULT_AGENT: Omit<Agent, 'id' | 'createdAt' | 'updatedAt'> = {

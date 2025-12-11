@@ -1,5 +1,5 @@
 // Schema & Types
-export type { Agent, Conversation, Message, ChatDBSchema } from './schema'
+export type { Agent, Conversation, Message, MagicTemplate, ChatDBSchema } from './schema'
 export { DB_NAME, DB_VERSION, DEFAULT_AGENT } from './schema'
 
 // Operations
@@ -24,6 +24,12 @@ export {
   updateMessage,
   getMessagesByConversationId,
   deleteMessagesByConversationId,
+  // Magic Template
+  createMagicTemplate,
+  getMagicTemplate,
+  getAllMagicTemplates,
+  updateMagicTemplate,
+  deleteMagicTemplate,
   // Converters & Utils
   uiMessageToMessage,
   messageToUIMessage,

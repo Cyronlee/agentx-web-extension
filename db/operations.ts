@@ -7,6 +7,7 @@ import {
   type Agent,
   type Conversation,
   type Message,
+  type MagicTemplate,
   DB_NAME,
   DB_VERSION,
   DEFAULT_AGENT,
@@ -50,6 +51,14 @@ async function getDB(): Promise<IDBPDatabase<ChatDBSchema>> {
           keyPath: 'id',
         })
         messageStore.createIndex('by-conversationId', 'conversationId')
+      }
+
+      // Create magicTemplates store (new in v3)
+      if (!db.objectStoreNames.contains('magicTemplates')) {
+        const magicTemplateStore = db.createObjectStore('magicTemplates', {
+          keyPath: 'id',
+        })
+        magicTemplateStore.createIndex('by-updatedAt', 'updatedAt')
       }
     },
   })
@@ -290,4 +299,57 @@ export function parseAgentMCPConfig(agent: Agent): {
   } catch {
     return null
   }
+}
+
+// ============ Magic Template CRUD ============
+
+export async function createMagicTemplate(
+  template: Omit<MagicTemplate, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<MagicTemplate> {
+  const db = await getDB()
+  const now = Date.now()
+  const newTemplate: MagicTemplate = {
+    ...template,
+    id: nanoid(),
+    createdAt: now,
+    updatedAt: now,
+  }
+  await db.add('magicTemplates', newTemplate)
+  return newTemplate
+}
+
+export async function getMagicTemplate(
+  id: string
+): Promise<MagicTemplate | undefined> {
+  const db = await getDB()
+  return db.get('magicTemplates', id)
+}
+
+export async function getAllMagicTemplates(): Promise<MagicTemplate[]> {
+  const db = await getDB()
+  const templates = await db.getAllFromIndex('magicTemplates', 'by-updatedAt')
+  // Return in descending order (most recent first)
+  return templates.reverse()
+}
+
+export async function updateMagicTemplate(
+  id: string,
+  updates: Partial<Omit<MagicTemplate, 'id' | 'createdAt'>>
+): Promise<MagicTemplate | undefined> {
+  const db = await getDB()
+  const template = await db.get('magicTemplates', id)
+  if (!template) return undefined
+
+  const updated: MagicTemplate = {
+    ...template,
+    ...updates,
+    updatedAt: Date.now(),
+  }
+  await db.put('magicTemplates', updated)
+  return updated
+}
+
+export async function deleteMagicTemplate(id: string): Promise<void> {
+  const db = await getDB()
+  await db.delete('magicTemplates', id)
 }

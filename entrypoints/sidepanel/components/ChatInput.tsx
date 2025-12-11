@@ -17,6 +17,7 @@ import { useState, useCallback } from 'react'
 
 import { DEFAULT_MODEL_ID } from '../lib/models'
 import { AttachmentMenu } from './AttachmentMenu'
+import { MagicTemplateButton } from './magic-template'
 import { MCPIndicator } from './mcp/MCPIndicator'
 import { MCPDialog } from './mcp/MCPDialog'
 import { ModelSelectorButton } from './ModelSelectorButton'
@@ -58,6 +59,7 @@ interface ChatInputProps {
   isCapturing: boolean
   agent?: Agent | null
   onAgentUpdate?: () => void
+  onNavigateToTemplates?: () => void
 }
 
 /**
@@ -76,6 +78,7 @@ export function ChatInput({
   isCapturing,
   agent,
   onAgentUpdate,
+  onNavigateToTemplates,
 }: ChatInputProps) {
   const [text, setText] = useState('')
   const [model, setModel] = useState(DEFAULT_MODEL_ID)
@@ -115,6 +118,16 @@ export function ChatInput({
     [onSubmit]
   )
 
+  const handleInsertTemplate = useCallback((content: string) => {
+    // Insert template content into the text area
+    setText((prevText) => {
+      if (prevText) {
+        return prevText + '\n\n' + content
+      }
+      return content
+    })
+  }, [])
+
   return (
     <div className="grid shrink-0 gap-4 p-4">
       <PromptInput
@@ -145,6 +158,10 @@ export function ChatInput({
             <AttachmentMenu
               onCaptureScreenshot={onCaptureScreenshot}
               isCapturing={isCapturing}
+            />
+            <MagicTemplateButton
+              onInsertTemplate={handleInsertTemplate}
+              onManageTemplates={onNavigateToTemplates}
             />
             <MCPIndicator
               agent={agent ?? null}
