@@ -16,6 +16,7 @@ date: 2025-12-05
 - [[backend]] - Express backend with AI SDK
 - [[ai-sdk-integration]] - Chat persistence and streaming
 - [[mcp-integration]] - MCP tools with human-in-the-loop
+- [[agents]] - Agent management with custom prompts and MCP configs
 
 ## Quick Reference
 

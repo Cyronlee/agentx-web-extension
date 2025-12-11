@@ -10,12 +10,14 @@ import {
   PromptInputTools,
   usePromptInputAttachments,
 } from '@/components/ai-elements/prompt-input'
+import type { Agent } from '@/db'
 import type { ChatStatus } from 'ai'
 import { ArrowUpIcon, SquareIcon } from 'lucide-react'
 import { useState, useCallback } from 'react'
 
 import { DEFAULT_MODEL_ID } from '../lib/models'
 import { AttachmentMenu } from './AttachmentMenu'
+import { MCPServersIndicator } from './MCPServersIndicator'
 import { ModelSelectorButton } from './ModelSelectorButton'
 
 // SubmitButton component that can access attachments context
@@ -49,6 +51,7 @@ interface ChatInputProps {
   placeholder?: string
   onCaptureScreenshot: () => Promise<string | null>
   isCapturing: boolean
+  agent?: Agent | null
 }
 
 /**
@@ -65,6 +68,7 @@ export function ChatInput({
   placeholder = 'How can I help you?',
   onCaptureScreenshot,
   isCapturing,
+  agent,
 }: ChatInputProps) {
   const [text, setText] = useState('')
   const [model, setModel] = useState(DEFAULT_MODEL_ID)
@@ -113,6 +117,7 @@ export function ChatInput({
               onCaptureScreenshot={onCaptureScreenshot}
               isCapturing={isCapturing}
             />
+            <MCPServersIndicator agent={agent ?? null} />
           </PromptInputTools>
 
           <div className="flex items-center gap-2">
@@ -142,4 +147,3 @@ export function ChatInput({
     </div>
   )
 }
-

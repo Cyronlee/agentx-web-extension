@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
-import { nanoid } from 'nanoid'
 import {
   createConversation,
   deleteConversation,
+  ensureDefaultAgent,
   getAllConversations,
+  getAgent,
+  type Agent,
   type Conversation,
-} from '@/lib/db'
+} from '@/db'
 
 export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -19,15 +21,15 @@ export function useConversations() {
     const loadConversations = async () => {
       try {
         setLoading(true)
+        // Ensure default agent exists
+        const defaultAgent = await ensureDefaultAgent()
         const convs = await getAllConversations()
 
         if (convs.length === 0) {
-          // No conversations exist, create initial one
+          // No conversations exist, create initial one with default agent
           const newConv = await createConversation({
-            id: nanoid(),
-            title: 'New Chat',
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
+            title: formatConversationTitle(defaultAgent),
+            agentId: defaultAgent.id,
           })
           setConversations([newConv])
           setCurrentConversationId(newConv.id)
@@ -50,13 +52,20 @@ export function useConversations() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Create a new conversation
-  const createNewConversation = useCallback(async () => {
+  // Create a new conversation with an agent
+  const createNewConversation = useCallback(async (agentId?: string) => {
+    // Get agent (use default if not specified)
+    let agent: Agent | undefined
+    if (agentId) {
+      agent = await getAgent(agentId)
+    }
+    if (!agent) {
+      agent = await ensureDefaultAgent()
+    }
+
     const newConv = await createConversation({
-      id: nanoid(),
-      title: 'New Chat',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      title: formatConversationTitle(agent),
+      agentId: agent.id,
     })
 
     setConversations((prev) => [newConv, ...prev])
@@ -112,3 +121,17 @@ export function useConversations() {
   }
 }
 
+// Helper to format conversation title with agent info and time
+function formatConversationTitle(agent: Agent): string {
+  const now = new Date()
+  const timeStr = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+  const dateStr = now.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  })
+  return `${agent.name} - ${dateStr} ${timeStr}`
+}

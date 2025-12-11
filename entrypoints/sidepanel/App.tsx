@@ -5,12 +5,15 @@ import { Header } from './components/Header'
 import { ChatPage } from './pages/ChatPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { DebugPage } from './pages/DebugPage'
+import { AgentsPage } from './pages/AgentsPage'
+import { AgentEditPage } from './pages/AgentEditPage'
 import { ChatView } from './components/ChatDemo'
 
-type Page = 'chat' | 'settings' | 'debug' | 'demo'
+type Page = 'chat' | 'settings' | 'debug' | 'demo' | 'agents' | 'agent-edit'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('chat')
+  const [editingAgentId, setEditingAgentId] = useState<string | null>(null)
 
   const {
     conversations,
@@ -29,14 +32,32 @@ function App() {
     setCurrentPage('chat')
   }
 
-  const handleNewChat = async () => {
-    await createNewConversation()
+  const handleNewChat = async (agentId?: string) => {
+    await createNewConversation(agentId)
     setCurrentPage('chat')
   }
 
   const handleSelectConversation = (id: string) => {
     selectConversation(id)
     setCurrentPage('chat')
+  }
+
+  // Agent page handlers
+  const handleEditAgent = (agentId: string | null) => {
+    setEditingAgentId(agentId)
+    setCurrentPage('agent-edit')
+  }
+
+  const handleAgentSaved = (_agentId: string) => {
+    setCurrentPage('agents')
+  }
+
+  const handleAgentDeleted = () => {
+    setCurrentPage('agents')
+  }
+
+  const handleBackToAgents = () => {
+    setCurrentPage('agents')
   }
 
   return (
@@ -48,7 +69,7 @@ function App() {
         conversations={conversations}
         currentConversationId={currentConversationId}
         onSelectConversation={handleSelectConversation}
-        onNewChat={handleNewChat}
+        onNewChat={() => handleNewChat()}
         conversationsLoading={conversationsLoading}
       />
 
@@ -65,6 +86,21 @@ function App() {
         )}
         {currentPage === 'debug' && <DebugPage onBack={handleBackToChat} />}
         {currentPage === 'demo' && <ChatView />}
+        {currentPage === 'agents' && (
+          <AgentsPage
+            onBack={handleBackToChat}
+            onEditAgent={handleEditAgent}
+            onNewChat={(agentId) => handleNewChat(agentId)}
+          />
+        )}
+        {currentPage === 'agent-edit' && (
+          <AgentEditPage
+            agentId={editingAgentId}
+            onBack={handleBackToAgents}
+            onSaved={handleAgentSaved}
+            onDeleted={handleAgentDeleted}
+          />
+        )}
       </div>
     </div>
   )

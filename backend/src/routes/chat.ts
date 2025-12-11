@@ -32,13 +32,18 @@ router.post('/', async (req: Request, res: Response) => {
   console.log(`[Chat][${requestId}] === New chat request ===`)
 
   const body = req.body as ChatRequestBody
-  const { messages, mcpConfig, apiKeys, model } = body
+  const { messages, mcpConfig, apiKeys, model, systemPrompt } = body
 
   // Determine which provider/model to use
   const selectedModel = model || 'google/gemini-2.5-flash-lite'
 
   console.log(`[Chat][${requestId}] Model: ${selectedModel}`)
   console.log(`[Chat][${requestId}] Messages count: ${messages?.length || 0}`)
+  console.log(
+    `[Chat][${requestId}] System prompt: ${
+      systemPrompt ? `${systemPrompt.slice(0, 50)}...` : 'none'
+    }`
+  )
   console.log(
     `[Chat][${requestId}] API keys configured: ${
       Object.keys(apiKeys || {})
@@ -144,6 +149,7 @@ router.post('/', async (req: Request, res: Response) => {
 
           const result = streamText({
             model: modelInstance,
+            system: systemPrompt || undefined,
             messages: convertToModelMessages(processedMessages),
             tools: hasTools ? tools : undefined,
             stopWhen: hasTools ? stepCountIs(10) : undefined,

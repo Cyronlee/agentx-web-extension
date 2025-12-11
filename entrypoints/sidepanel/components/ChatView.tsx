@@ -40,6 +40,7 @@ export function ChatView({
     isLoading: isInitializing,
     error,
     conversation,
+    agent,
   } = useChatPersistence({ conversationId, onConversationUpdate })
 
   // Screenshot capture function
@@ -151,6 +152,7 @@ export function ChatView({
         disabled={hasPendingToolConfirmation}
         onCaptureScreenshot={captureScreenshot}
         isCapturing={isCapturing}
+        agent={agent}
       />
     </div>
   )

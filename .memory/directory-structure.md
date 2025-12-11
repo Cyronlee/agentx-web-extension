@@ -22,11 +22,14 @@ agentx-web-extension/
 ├── hooks/                    # React hooks
 │   ├── use-chat-persistence.ts
 │   ├── use-conversations.ts
+│   ├── use-agents.ts         # Agent CRUD
 │   ├── use-api-key.ts
-│   ├── use-mcp-config.ts
 │   └── use-theme.ts
+├── db/                       # IndexedDB layer
+│   ├── schema.ts             # Types (Agent, Conversation, Message)
+│   ├── operations.ts         # CRUD functions
+│   └── index.ts              # Unified exports
 ├── lib/
-│   ├── db.ts                 # IndexedDB operations
 │   └── utils.ts              # Utilities (cn)
 ├── backend/                  # Express backend
 │   └── src/

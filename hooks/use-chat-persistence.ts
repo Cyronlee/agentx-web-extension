@@ -6,18 +6,21 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   addMessage,
   createConversation,
+  ensureDefaultAgent,
+  getAgent,
   getConversation,
   getLastConversation,
   getMessagesByConversationId,
-  storedMessageToUIMessage,
-  uiMessageToStoredMessage,
+  messageToUIMessage,
+  parseAgentMCPConfig,
+  uiMessageToMessage,
   updateConversation,
   updateMessage,
+  type Agent,
   type Conversation,
-} from '@/lib/db'
+} from '@/db'
 
 import { getApiKeys } from './use-api-key'
-import { getMCPConfig } from './use-mcp-config'
 
 // Backend API URL
 const API_URL = 'http://localhost:3001/api/chat'
@@ -38,12 +41,13 @@ const TERMINAL_FINISH_REASONS: FinishReason[] = [
 
 export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
   const [conversation, setConversation] = useState<Conversation | null>(null)
+  const [agent, setAgent] = useState<Agent | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const processedMessageIds = useRef<Set<string>>(new Set())
   const lastMessageCountRef = useRef(0)
 
-  // Initialize conversation
+  // Initialize conversation and load agent
   useEffect(() => {
     const initConversation = async () => {
       try {
@@ -61,13 +65,17 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
         }
 
         if (!conv) {
-          // Create new empty conversation
+          // Create new empty conversation with default agent
+          const defaultAgent = await ensureDefaultAgent()
           conv = await createConversation({
-            id: nanoid(),
             title: 'New Chat',
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
+            agentId: defaultAgent.id,
           })
+          setAgent(defaultAgent)
+        } else {
+          // Load the agent for this conversation
+          const loadedAgent = await getAgent(conv.agentId)
+          setAgent(loadedAgent || null)
         }
 
         setConversation(conv)
@@ -82,18 +90,19 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
     initConversation()
   }, [options.conversationId])
 
-  // Create transport with dynamic API keys and MCP config
+  // Create transport with dynamic API keys and agent config
   const transport = new DefaultChatTransport({
     api: API_URL,
     body: async () => {
-      const [apiKeys, mcpConfig] = await Promise.all([
-        getApiKeys(),
-        getMCPConfig(),
-      ])
+      const apiKeys = await getApiKeys()
+
+      // Get MCP config from agent if enabled
+      const mcpConfig = agent ? parseAgentMCPConfig(agent) : null
 
       return {
         apiKeys,
         mcpConfig,
+        systemPrompt: agent?.systemPrompt || undefined,
       }
     },
   })
@@ -129,7 +138,7 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
           console.log(`[useChatPersistence] Updated message: ${message.id}`)
         } else {
           // Save new message
-          await addMessage(uiMessageToStoredMessage(message, conversation.id))
+          await addMessage(uiMessageToMessage(message, conversation.id))
           processedMessageIds.current.add(message.id)
           console.log(`[useChatPersistence] Saved new message: ${message.id}`)
         }
@@ -172,7 +181,7 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
           conversation.id
         )
         if (storedMessages.length > 0) {
-          const uiMessages = storedMessages.map(storedMessageToUIMessage)
+          const uiMessages = storedMessages.map(messageToUIMessage)
           chatResult.setMessages(uiMessages)
           // Mark all loaded messages as processed
           storedMessages.forEach((msg) =>
@@ -214,7 +223,7 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
         }
 
         // Save to IndexedDB
-        await addMessage(uiMessageToStoredMessage(userMessage, conversation.id))
+        await addMessage(uiMessageToMessage(userMessage, conversation.id))
         processedMessageIds.current.add(userMessageId)
         lastMessageCountRef.current++
 
@@ -230,13 +239,13 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
 
   // Create new conversation
   const newConversation = useCallback(async () => {
+    const defaultAgent = await ensureDefaultAgent()
     const conv = await createConversation({
-      id: nanoid(),
       title: 'New Chat',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      agentId: defaultAgent.id,
     })
     setConversation(conv)
+    setAgent(defaultAgent)
     chatResult.setMessages([])
     processedMessageIds.current.clear()
     lastMessageCountRef.current = 0
@@ -247,6 +256,7 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
     ...chatResult,
     sendMessage,
     conversation,
+    agent,
     isLoading,
     error,
     newConversation,

@@ -21,6 +21,10 @@ entrypoints/          # auto-discovered by WXT
   sidepanel/          # React UI
 components/ui/        # shadcn/ui (auto-gen)
 hooks/                # use-settings.ts, use-theme.ts
+db/                   # IndexedDB layer
+  schema.ts           # types (Conversation, Message)
+  operations.ts       # CRUD functions
+  index.ts            # unified exports
 lib/utils.ts          # cn()
 assets/tailwind.css   # theme vars
 app.config.ts         # runtime config + type augmentation
@@ -41,13 +45,19 @@ wxt.config.ts         # manifest generation
 - `@/` → project root (ALWAYS)
 - `#imports` → WXT auto-imports
 
-### Storage
+### Storage (WXT)
 
 ```typescript
-storage.defineItem<T>("local:key", { fallback: T });
+storage.defineItem<T>('local:key', { fallback: T })
 // MUST: type + fallback
 // Access: .getValue(), .setValue(), .removeValue()
 ```
+
+### Database (IndexedDB)
+
+- Schema in `db/schema.ts`, operations in `db/operations.ts`
+- Import from `@/db`: types + CRUD functions
+- Use `idb` library for IndexedDB operations
 
 ### Styling
 

@@ -27,6 +27,7 @@ export interface ChatRequestBody {
   mcpConfig?: MCPConfig
   apiKeys?: ProviderApiKeys
   model?: string
+  systemPrompt?: string
 }
 
 // Human-in-the-loop approval states
@@ -36,4 +37,3 @@ export const APPROVAL = {
 } as const
 
 export type ApprovalState = (typeof APPROVAL)[keyof typeof APPROVAL]
-

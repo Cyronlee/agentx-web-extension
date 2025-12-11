@@ -6,24 +6,18 @@ import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
-import { Textarea } from '@/components/ui/textarea'
 import { useApiKey, type ProviderApiKeys } from '@/hooks/use-api-key'
-import { useMCPConfig } from '@/hooks/use-mcp-config'
 import { useSettings } from '@/hooks/use-settings'
 import { useTheme } from '@/hooks/use-theme'
 import {
-  AlertCircle,
-  CheckCircle2,
   Eye,
   EyeOff,
   Key,
   Monitor,
   Moon,
-  Server,
   Sun,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
 
 const PROVIDER_LABELS: Record<keyof ProviderApiKeys, string> = {
   aiGateway: 'Vercel AI Gateway',
@@ -37,15 +31,6 @@ export function SettingsView() {
   const { appearance, system, updateAppearance, updateSystem, resetSettings } =
     useSettings()
   const { apiKeys, setApiKey, loading: apiKeyLoading } = useApiKey()
-  const {
-    config: mcpConfig,
-    getConfigAsJSON,
-    setConfigFromJSON,
-    hasServers,
-    serverNames,
-    error: mcpError,
-    loading: mcpLoading,
-  } = useMCPConfig()
   const { setTheme } = useTheme({
     theme: appearance.theme,
     onThemeChange: (theme) => updateAppearance({ theme }),
@@ -58,8 +43,6 @@ export function SettingsView() {
     openai: '',
     anthropic: '',
   })
-  const [mcpJsonInput, setMcpJsonInput] = useState('')
-  const [mcpJsonValid, setMcpJsonValid] = useState<boolean | null>(null)
 
   // Sync apiKeyInputs with loaded apiKeys
   useEffect(() => {
@@ -67,14 +50,6 @@ export function SettingsView() {
       setApiKeyInputs(apiKeys)
     }
   }, [apiKeyLoading, apiKeys])
-
-  // Sync MCP JSON input with loaded config (only on initial load)
-  useEffect(() => {
-    if (!mcpLoading) {
-      setMcpJsonInput(getConfigAsJSON())
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mcpLoading])
 
   const themeOptions = [
     { value: 'system', label: 'System', icon: Monitor },
@@ -96,40 +71,6 @@ export function SettingsView() {
 
   const toggleShowApiKey = (provider: string) => {
     setShowApiKeys((prev) => ({ ...prev, [provider]: !prev[provider] }))
-  }
-
-  const handleMcpJsonChange = (value: string) => {
-    setMcpJsonInput(value)
-
-    // Validate JSON as user types
-    if (value.trim() === '') {
-      setMcpJsonValid(null)
-      return
-    }
-
-    try {
-      const parsed = JSON.parse(value)
-      // Valid if mcpServers exists and is an object (including empty object)
-      if (typeof parsed.mcpServers === 'object' && parsed.mcpServers !== null) {
-        setMcpJsonValid(true)
-      } else {
-        setMcpJsonValid(false)
-      }
-    } catch {
-      // While typing, don't show error immediately for incomplete JSON
-      setMcpJsonValid(null)
-    }
-  }
-
-  const handleSaveMcpConfig = async () => {
-    const success = await setConfigFromJSON(mcpJsonInput)
-    if (success) {
-      toast.success('MCP configuration saved')
-    } else {
-      toast.error('Invalid MCP configuration', {
-        description: mcpError || 'Please check your JSON format',
-      })
-    }
   }
 
   return (
@@ -182,90 +123,6 @@ export function SettingsView() {
             )}
             <p className="text-xs text-muted-foreground">
               API keys are stored locally and never sent to third parties
-            </p>
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* MCP Configuration */}
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Server className="h-5 w-5" />
-              MCP Servers
-            </h3>
-            <p className="text-xs text-muted-foreground mb-4">
-              Configure Model Context Protocol servers for tool access
-            </p>
-          </div>
-
-          {/* Connected servers indicator */}
-          {hasServers && (
-            <div className="flex flex-wrap gap-2 mb-2">
-              {serverNames.map((name) => (
-                <Badge key={name} variant="secondary" className="text-xs">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                  {name}
-                </Badge>
-              ))}
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Configuration (JSON)</Label>
-            <div className="relative">
-              <Textarea
-                value={mcpJsonInput}
-                onChange={(e) => handleMcpJsonChange(e.target.value)}
-                placeholder={`{
-  "mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path"]
-    }
-  }
-}`}
-                className="font-mono text-xs min-h-[200px] resize-y"
-                disabled={mcpLoading}
-              />
-              {mcpJsonValid !== null && (
-                <div className="absolute right-2 top-2">
-                  {mcpJsonValid ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4 text-destructive" />
-                  )}
-                </div>
-              )}
-            </div>
-            {mcpError && (
-              <p className="text-xs text-destructive">{mcpError}</p>
-            )}
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => {
-                  setMcpJsonInput(getConfigAsJSON())
-                  setMcpJsonValid(null)
-                }}
-              >
-                Reset
-              </Button>
-              <Button
-                size="sm"
-                className="flex-1"
-                onClick={handleSaveMcpConfig}
-                disabled={mcpJsonValid === false || mcpLoading}
-              >
-                Save MCP Config
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Supports stdio, HTTP, and SSE transports. All tool calls require
-              user confirmation.
             </p>
           </div>
         </div>

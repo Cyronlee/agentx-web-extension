@@ -16,7 +16,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import type { Conversation } from '@/lib/db'
+import type { Conversation } from '@/db'
 
 interface ConversationSelectorProps {
   conversations: Conversation[]
