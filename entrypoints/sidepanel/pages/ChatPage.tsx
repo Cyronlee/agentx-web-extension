@@ -1,11 +1,14 @@
-import { ChatView } from '../components/ChatView'
+import { ChatView } from '../components/ChatWindow'
 
 interface ChatPageProps {
   conversationId: string | null
   onConversationUpdate?: () => void
 }
 
-export function ChatPage({ conversationId, onConversationUpdate }: ChatPageProps) {
+export function ChatPage({
+  conversationId,
+  onConversationUpdate,
+}: ChatPageProps) {
   if (!conversationId) {
     return (
       <div className="flex size-full items-center justify-center bg-secondary">

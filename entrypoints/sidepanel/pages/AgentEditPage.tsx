@@ -191,163 +191,160 @@ export function AgentEditPage({
       </div>
 
       {/* Content */}
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-6">
-          {/* Basic Info */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={icon} alt={name} />
-                <AvatarFallback>
-                  {name.slice(0, 2).toUpperCase() || 'AG'}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Agent name"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="icon">Icon URL</Label>
+      <div className="p-4 space-y-6 flex-1 overflow-y-auto">
+        {/* Basic Info */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={icon} alt={name} />
+              <AvatarFallback>
+                {name.slice(0, 2).toUpperCase() || 'AG'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="name">Name</Label>
               <Input
-                id="icon"
-                value={icon}
-                onChange={(e) => setIcon(e.target.value)}
-                placeholder="https://example.com/icon.png"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Agent name"
               />
-              <p className="text-xs text-muted-foreground">
-                Enter a URL to an image for the agent icon
-              </p>
             </div>
           </div>
 
-          <Separator />
-
-          {/* System Prompt */}
           <div className="space-y-2">
-            <Label htmlFor="systemPrompt">System Prompt</Label>
-            <Textarea
-              id="systemPrompt"
-              value={systemPrompt}
-              onChange={(e) => setSystemPrompt(e.target.value)}
-              placeholder="You are a helpful AI assistant..."
-              className="min-h-[150px] resize-y"
+            <Label htmlFor="icon">Icon URL</Label>
+            <Input
+              id="icon"
+              value={icon}
+              onChange={(e) => setIcon(e.target.value)}
+              placeholder="https://example.com/icon.png"
             />
             <p className="text-xs text-muted-foreground">
-              Instructions that define how the agent behaves
+              Enter a URL to an image for the agent icon
             </p>
           </div>
+        </div>
 
-          <Separator />
+        <Separator />
 
-          {/* MCP Configuration */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Server className="h-5 w-5" />
-                <div>
-                  <Label className="text-base">MCP Servers</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Enable Model Context Protocol tools
-                  </p>
-                </div>
+        {/* System Prompt */}
+        <div className="space-y-2">
+          <Label htmlFor="systemPrompt">System Prompt</Label>
+          <Textarea
+            id="systemPrompt"
+            value={systemPrompt}
+            onChange={(e) => setSystemPrompt(e.target.value)}
+            placeholder="You are a helpful AI assistant..."
+            className="min-h-[150px] resize-y"
+          />
+          <p className="text-xs text-muted-foreground">
+            Instructions that define how the agent behaves
+          </p>
+        </div>
+
+        <Separator />
+
+        {/* MCP Configuration */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Server className="h-5 w-5" />
+              <div>
+                <Label className="text-base">MCP Servers</Label>
+                <p className="text-xs text-muted-foreground">
+                  Enable Model Context Protocol tools
+                </p>
               </div>
-              <Switch
-                checked={mcpServersEnabled}
-                onCheckedChange={setMcpServersEnabled}
-              />
             </div>
+            <Switch
+              checked={mcpServersEnabled}
+              onCheckedChange={setMcpServersEnabled}
+            />
+          </div>
 
-            {mcpServersEnabled && (
-              <div className="space-y-2">
-                <Label htmlFor="mcpServers">Configuration (JSON)</Label>
-                <div className="relative">
-                  <Textarea
-                    id="mcpServers"
-                    value={mcpServers}
-                    onChange={(e) => handleMcpJsonChange(e.target.value)}
-                    placeholder={`{
+          {mcpServersEnabled && (
+            <div className="space-y-2">
+              <Label htmlFor="mcpServers">Configuration (JSON)</Label>
+              <div className="relative">
+                <Textarea
+                  id="mcpServers"
+                  value={mcpServers}
+                  onChange={(e) => handleMcpJsonChange(e.target.value)}
+                  placeholder={`{
   "mcpServers": {
-    "filesystem": {
-      "url": "http://localhost:3000/mcp"
+    "everything": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-everything"
+      ]
     }
   }
 }`}
-                    className="font-mono text-xs min-h-[200px] resize-y"
-                  />
-                  {mcpJsonValid !== null && (
-                    <div className="absolute right-2 top-2">
-                      {mcpJsonValid ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <AlertCircle className="h-4 w-4 text-destructive" />
-                      )}
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Configure MCP servers for this agent. Supports HTTP and SSE
-                  transports.
-                </p>
+                  className="font-mono text-xs min-h-[200px] resize-y"
+                />
+                {mcpJsonValid !== null && (
+                  <div className="absolute right-2 top-2">
+                    {mcpJsonValid ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-destructive" />
+                    )}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-
-          <Separator />
-
-          {/* Actions */}
-          <div className="flex gap-2">
-            {isEditMode && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="flex-1">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Agent</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete this agent? This action
-                      cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex-1"
-            >
-              {saving ? (
-                <>
-                  <Spinner className="mr-2 h-4 w-4" />
-                  Saving...
-                </>
-              ) : isEditMode ? (
-                'Save Changes'
-              ) : (
-                'Create Agent'
-              )}
-            </Button>
-          </div>
+              <p className="text-xs text-muted-foreground">
+                Configure MCP servers for this agent. Supports HTTP and SSE
+                transports.
+              </p>
+            </div>
+          )}
         </div>
-      </ScrollArea>
+
+        <Separator />
+
+        {/* Actions */}
+        <div className="flex gap-2">
+          {isEditMode && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="flex-1">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Agent</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete this agent? This action
+                    cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete}>
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          <Button onClick={handleSave} disabled={saving} className="flex-1">
+            {saving ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" />
+                Saving...
+              </>
+            ) : isEditMode ? (
+              'Save Changes'
+            ) : (
+              'Create Agent'
+            )}
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
-

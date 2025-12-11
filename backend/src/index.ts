@@ -2,6 +2,7 @@ import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import chatRouter from './routes/chat.js'
+import mcpRouter from './routes/mcp.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -26,6 +27,7 @@ app.get('/health', (_req, res) => {
 
 // API routes
 app.use('/api/chat', chatRouter)
+app.use('/api/mcp', mcpRouter)
 
 // Error handling
 app.use(

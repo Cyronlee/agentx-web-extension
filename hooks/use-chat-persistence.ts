@@ -252,6 +252,13 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
     return conv
   }, [chatResult])
 
+  // Refresh agent data
+  const refreshAgent = useCallback(async () => {
+    if (!conversation) return
+    const loadedAgent = await getAgent(conversation.agentId)
+    setAgent(loadedAgent || null)
+  }, [conversation])
+
   return {
     ...chatResult,
     sendMessage,
@@ -260,5 +267,6 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}) {
     isLoading,
     error,
     newConversation,
+    refreshAgent,
   }
 }

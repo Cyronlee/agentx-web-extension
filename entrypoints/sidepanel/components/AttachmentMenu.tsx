@@ -8,7 +8,13 @@ import {
   PromptInputButton,
   usePromptInputAttachments,
 } from '@/components/ai-elements/prompt-input'
-import { CropIcon, FileIcon, ImageIcon, PaperclipIcon, XIcon } from 'lucide-react'
+import {
+  CropIcon,
+  FileIcon,
+  ImageIcon,
+  PaperclipIcon,
+  XIcon,
+} from 'lucide-react'
 
 interface AttachmentMenuProps {
   onCaptureScreenshot: () => Promise<string | null>
@@ -44,7 +50,7 @@ export function AttachmentMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <PromptInputButton
-          className="!rounded-full border text-foreground"
+          className="!rounded-full border text-foreground cursor-pointer"
           variant="outline"
         >
           <PaperclipIcon size={16} />
@@ -87,4 +93,3 @@ export function AttachmentMenu({
     </DropdownMenu>
   )
 }
-

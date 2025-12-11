@@ -17,8 +17,13 @@ import { useState, useCallback } from 'react'
 
 import { DEFAULT_MODEL_ID } from '../lib/models'
 import { AttachmentMenu } from './AttachmentMenu'
-import { MCPServersIndicator } from './MCPServersIndicator'
+import { MCPIndicator } from './mcp/MCPIndicator'
+import { MCPDialog } from './mcp/MCPDialog'
 import { ModelSelectorButton } from './ModelSelectorButton'
+import { useMCPStatus } from '@/hooks/use-mcp-status'
+import { parseAgentMCPConfig } from '@/db'
+import type { ParsedMCPConfig } from '@/types/mcp'
+import { useMemo } from 'react'
 
 // SubmitButton component that can access attachments context
 interface SubmitButtonProps {
@@ -52,6 +57,7 @@ interface ChatInputProps {
   onCaptureScreenshot: () => Promise<string | null>
   isCapturing: boolean
   agent?: Agent | null
+  onAgentUpdate?: () => void
 }
 
 /**
@@ -69,14 +75,33 @@ export function ChatInput({
   onCaptureScreenshot,
   isCapturing,
   agent,
+  onAgentUpdate,
 }: ChatInputProps) {
   const [text, setText] = useState('')
   const [model, setModel] = useState(DEFAULT_MODEL_ID)
   const [modelSelectorOpen, setModelSelectorOpen] = useState(false)
+  const [mcpDialogOpen, setMcpDialogOpen] = useState(false)
 
   const isStreaming = status === 'streaming'
   const isSubmitted = status === 'submitted'
   const isProcessing = isStreaming || isSubmitted
+
+  // Parse MCP config for SWR
+  const mcpConfig = useMemo(() => {
+    if (!agent) return null
+    return parseAgentMCPConfig(agent) as ParsedMCPConfig | null
+  }, [agent])
+
+  const hasServers = useMemo(() => {
+    if (!mcpConfig?.mcpServers) return false
+    return Object.keys(mcpConfig.mcpServers).length > 0
+  }, [mcpConfig])
+
+  // Preload MCP status using SWR
+  const { serverStatus, isLoading: isMCPLoading } = useMCPStatus({
+    mcpConfig,
+    enabled: (agent?.mcpServersEnabled ?? false) && hasServers,
+  })
 
   const handleSubmit = useCallback(
     (message: PromptInputMessage) => {
@@ -106,7 +131,11 @@ export function ChatInput({
         <PromptInputTextarea
           className="px-5 md:text-base"
           onChange={(event) => setText(event.target.value)}
-          placeholder={disabled ? 'Please approve or deny the tool request above...' : placeholder}
+          placeholder={
+            disabled
+              ? 'Please approve or deny the tool request above...'
+              : placeholder
+          }
           value={text}
           disabled={disabled}
         />
@@ -117,7 +146,12 @@ export function ChatInput({
               onCaptureScreenshot={onCaptureScreenshot}
               isCapturing={isCapturing}
             />
-            <MCPServersIndicator agent={agent ?? null} />
+            <MCPIndicator
+              agent={agent ?? null}
+              toolsCount={serverStatus?.totalToolsCount}
+              isLoading={isMCPLoading}
+              onClick={() => setMcpDialogOpen(true)}
+            />
           </PromptInputTools>
 
           <div className="flex items-center gap-2">
@@ -144,6 +178,13 @@ export function ChatInput({
           </div>
         </PromptInputFooter>
       </PromptInput>
+
+      <MCPDialog
+        agent={agent ?? null}
+        open={mcpDialogOpen}
+        onOpenChange={setMcpDialogOpen}
+        onAgentUpdate={onAgentUpdate}
+      />
     </div>
   )
 }
